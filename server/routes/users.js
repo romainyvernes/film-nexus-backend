@@ -1,9 +1,18 @@
-import { Router } from 'express';
+import { Router } from "express";
+import UserController from "../controllers/UserController";
+
 const router = Router();
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+/* GET all users */
+router.get("/", UserController.getUsers);
+
+/* GET one user */
+router.get("/:username", UserController.getUser);
+
+/* PUT update one user */
+router.put("/:username", UserController.updateUser);
+
+/* DELETE update one user */
+router.delete("/:username", UserController.deleteUser);
 
 export default router;

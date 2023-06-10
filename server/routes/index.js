@@ -1,9 +1,10 @@
-import { Router } from 'express';
+import { Router } from "express";
+import usersRouter from "./users";
+import projectsRouter from "./projects";
+
 const router = Router();
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.send("Hello World");
-});
+router.use("/users", usersRouter);
+router.use("/projects", projectsRouter);
 
 export default router;
