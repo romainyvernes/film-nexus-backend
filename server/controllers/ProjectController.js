@@ -1,21 +1,63 @@
-export default {
-  getProjects: (req, res, next) => {
-    res.send("respond with a resource");
-  },
+import Project from '../models/Project';
 
-  getProject: (req, res, next) => {
-    res.send("respond with a resource");
-  },
+export const getAllProjects = async (req, res) => {
+  try {
+    const projects = await Project.getProjects();
+    res.json(projects);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving projects' });
+  }
+};
 
-  createProject: (req, res, next) => {
-    res.send("respond with a resource");
-  },
+export const getProjectById = async (req, res) => {
+  const projectId = req.params.id;
+  try {
+    const project = await Project.getProjectById(projectId);
+    if (project) {
+      res.json(project);
+    } else {
+      res.status(404).json({ message: 'Project not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving project' });
+  }
+};
 
-  updateProject: (req, res, next) => {
-    res.send("respond with a resource");
-  },
+export const createProject = async (req, res) => {
+  const { name } = req.body;
+  try {
+    const createdProject = await Project.createProject(name);
+    res.status(201).json(createdProject);
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating project' });
+  }
+};
 
-  deleteProject: (req, res, next) => {
-    res.send("respond with a resource");
-  },
+export const updateProject = async (req, res) => {
+  const projectId = req.params.id;
+  const { name } = req.body;
+  try {
+    const updatedProject = await Project.updateProject(projectId, name);
+    if (updatedProject) {
+      res.json(updatedProject);
+    } else {
+      res.status(404).json({ message: 'Project not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating project' });
+  }
+};
+
+export const deleteProject = async (req, res) => {
+  const projectId = req.params.id;
+  try {
+    const deletedProject = await Project.deleteProject(projectId);
+    if (deletedProject) {
+      res.json(deletedProject);
+    } else {
+      res.status(404).json({ message: 'Project not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting project' });
+  }
 };
