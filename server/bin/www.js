@@ -7,7 +7,7 @@
 import app from '../app';
 import debugLib from 'debug';
 import http from 'http';
-const debug = debugLib('es6-express-template:server');
+const debug = debugLib('film-nexus-backend:server');
 
 /**
  * Get port from environment and store in Express.
