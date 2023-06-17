@@ -6,10 +6,9 @@
   },
   "private": true,
   "nodemonConfig": {
-    "exec": "npm run dev",
+    "exec": "npm run start",
     "watch": [
-      "server/*",
-      "public/*"
+      "server/*"
     ],
     "ignore": [
       "**/__tests__/**",
@@ -26,12 +25,10 @@
     ]
   },
   "scripts": {
-    "start": "npm run prod",
+    "start": "npm run build && npm run server",
     "build": "npm run transpile",
     "server": "node ./dist-server/bin/www",
     "transpile": "babel ./server --out-dir dist-server",
-    "dev": "NODE_ENV=development npm run build && npm run server",
-    "prod": "NODE_ENV=production npm run build && npm run server",
     "watch:dev": "nodemon",
     "test": "jest"
   },
