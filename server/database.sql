@@ -2,7 +2,7 @@ CREATE DATABASE filmnexus;
 
 CREATE EXTENSION 'uuid-ossp';
 
-CREATE TABLE collaborator (
+CREATE TABLE users (
   id UUID NOT NULL PRIMARY KEY DEFAULT uuid_generate_v4(),
   username TEXT NOT NULL,
   first_name TEXT NOT NULL,
