@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   getAllUsers,
-  getUserById,
+  getUserByUsername,
   updateUser,
   deleteUser,
 } from "../controllers/UserController";
@@ -12,7 +12,7 @@ const router = Router();
 router.get("/", getAllUsers);
 
 /* GET one user */
-router.get("/:username", getUserById);
+router.get("/:username", getUserByUsername);
 
 /* PUT update one user */
 router.put("/:username", updateUser);
