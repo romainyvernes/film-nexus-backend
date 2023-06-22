@@ -4,7 +4,7 @@ const pool = new Pool({
   user: "postgres",
   host: "localhost",
   port: 5432,
-  database: "filmnexus"
+  database: process.env.NODE_ENV === "test" ? "testing" : "filmnexus"
 });
 
 export default pool;

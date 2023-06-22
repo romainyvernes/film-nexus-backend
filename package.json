@@ -17,7 +17,8 @@
     ]
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "modulePathIgnorePatterns": ["./utils"]
   },
   "babel": {
     "presets": [
@@ -28,9 +29,9 @@
     "start": "npm run build && npm run server",
     "build": "npm run transpile",
     "server": "node ./dist-server/bin/www",
-    "transpile": "babel ./server --out-dir dist-server",
+    "transpile": "babel ./server --delete-dir-on-start --out-dir dist-server",
     "watch:dev": "nodemon",
-    "test": "jest"
+    "test": "NODE_ENV=test && jest"
   },
   "dependencies": {
     "@babel/cli": "^7.21.5",
@@ -41,6 +42,7 @@
     "debug": "~2.6.9",
     "express": "~4.16.1",
     "ioredis": "^5.3.2",
+    "path": "^0.12.7",
     "pg": "^8.11.0"
   },
   "devDependencies": {
