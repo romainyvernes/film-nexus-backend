@@ -9,10 +9,10 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-export const getUserById = async (req, res) => {
-  const userId = req.params.id;
+export const getUserByUsername = async (req, res) => {
+  const username = req.params.username;
   try {
-    const user = await User.getUserById(userId);
+    const user = await User.getUserByUsername(username);
     if (user) {
       res.json(user);
     } else {
