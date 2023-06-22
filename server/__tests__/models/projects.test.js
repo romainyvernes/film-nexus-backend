@@ -1,30 +1,84 @@
 import * as Project from '../../models/Project';
 import pool from "../../db";
 import { clearDb, populateDb } from "../utils/helpers";
+import { v4 as uuidv4 } from 'uuid';
 
-// describe('Project Model', () => {
-//   beforeAll(async () => {
-//     await populateDb();
-//   });
+describe('Project Model', () => {
+  beforeAll(async () => {
+    await populateDb();
+  });
 
-//   afterAll(async () => {
-//     await clearDb();
-//     await pool.end();
-//   });
+  afterAll(async () => {
+    await clearDb();
+    await pool.end();
+  });
 
-//   it('should create a new project', async () => {
-//     // Test code for creating a new project
-//   });
+  const projectInfo = {
+    name: "Test Project",
+    creatorId: uuidv4()
+  };
 
-//   it('should find a project by ID', async () => {
-//     // Test code for finding a project by ID
-//   });
+  let newProject;
 
-//   it('should update a project', async () => {
-//     // Test code for updating a project
-//   });
+  it('should create a new project', async () => {
+    newProject = await Project.createProject(
+      projectInfo.name,
+      projectInfo.creatorId
+    );
 
-//   it('should delete a project', async () => {
-//     // Test code for deleting a project
-//   });
-// });
+    expect(newProject).toMatchObject({
+      id: expect.any(String),
+      name: expect.stringMatching(projectInfo.name),
+      created_on: expect.any(Date),
+      creator_id: expect.stringMatching(projectInfo.creatorId),
+    });
+  });
+
+  it('should find a project by ID', async () => {
+    const project = await Project.getProjectById(newProject.id);
+
+    expect(project).toMatchObject({
+      id: expect.stringMatching(newProject.id),
+      name: expect.stringMatching(projectInfo.name),
+      created_on: newProject.created_on,
+      creator_id: expect.stringMatching(projectInfo.creatorId),
+    });
+  });
+
+  it('should retrieve all projects', async () => {
+    const projects = await Project.getProjects();
+
+    expect(projects).toBeInstanceOf(Array)
+    expect(projects).toHaveLength(1);
+    expect(projects[0]).toMatchObject(newProject);
+  });
+
+  it('should update a project', async () => {
+    const newProjectName = "Updated Project";
+
+    const updatedProject = await Project.updateProject(
+      newProject.id,
+      newProjectName
+    );
+
+    expect(updatedProject).toMatchObject({
+      id: expect.stringMatching(newProject.id),
+      name: expect.stringMatching(newProjectName),
+      created_on: newProject.created_on,
+      creator_id: expect.stringMatching(projectInfo.creatorId),
+    });
+
+    newProject = updatedProject;
+  });
+
+  it('should delete a project', async () => {
+    const deletedProject = await Project.deleteProject(newProject.id);
+
+    expect(deletedProject).toMatchObject({
+      id: expect.stringMatching(newProject.id),
+      name: expect.stringMatching(newProject.name),
+      created_on: newProject.created_on,
+      creator_id: expect.stringMatching(newProject.creator_id),
+    });
+  });
+});

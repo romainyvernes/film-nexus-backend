@@ -20,10 +20,13 @@ export const getProjectById = async (id) => {
   }
 };
 
-export const createProject = async (name) => {
+export const createProject = async (name, creatorId) => {
   const client = await pool.connect();
   try {
-    const result = await client.query('INSERT INTO projects (name) VALUES ($1) RETURNING *', [name]);
+    const result = await client.query(
+      'INSERT INTO projects (name, creator_id) VALUES ($1, $2) RETURNING *',
+      [name, creatorId]
+    );
     return result.rows[0];
   } finally {
     client.release();
