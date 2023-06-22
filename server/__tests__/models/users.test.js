@@ -12,39 +12,84 @@ describe("User Model", () => {
     await pool.end();
   });
 
-  const newUserInfo = {
+  const newTestUserInfo = {
     username: "test_user",
-    first_name: "test",
-    last_name: "testy",
+    firstName: "test",
+    lastName: "testy",
     password: "password123"
   };
 
+  let newTestUser;
+
   it("should create a new user", async () => {
-    const newUser = await User.createUser(
-      newUserInfo.username,
-      newUserInfo.first_name,
-      newUserInfo.last_name,
-      newUserInfo.password
+    newTestUser = await User.createUser(
+      newTestUserInfo.username,
+      newTestUserInfo.firstName,
+      newTestUserInfo.lastName,
+      newTestUserInfo.password
     );
-    expect(newUser).toMatchObject({
+
+    expect(newTestUser).toMatchObject({
       id: expect.any(String),
-      username: expect(newUser.username).toBe(newUserInfo.username),
-      first_name: expect(newUser.first_name).toBe(newUserInfo.first_name),
-      last_name: expect(newUser.last_name).toBe(newUserInfo.last_name),
+      username: expect.stringMatching(newTestUserInfo.username),
+      first_name: expect.stringMatching(newTestUserInfo.firstName),
+      last_name: expect.stringMatching(newTestUserInfo.lastName),
       created_on: expect.any(Date),
-      password: expect.any(String),
+      password: expect.stringMatching(newTestUserInfo.password),
     });
   });
 
-  it("should find a user by username", async () => {
-    // Test code for finding a user by username
+  it("should find a user by ID", async () => {
+    const user = await User.getUserById(newTestUser.id);
+
+    expect(user).toMatchObject({
+      id: expect.stringMatching(newTestUser.id),
+      username: expect.stringMatching(newTestUserInfo.username),
+      first_name: expect.stringMatching(newTestUserInfo.firstName),
+      last_name: expect.stringMatching(newTestUserInfo.lastName),
+      created_on: newTestUser.created_on,
+      password: expect.stringMatching(newTestUser.password),
+    });
   });
 
   it("should update a user", async () => {
-    // Test code for updating a user
+    const updatedTestUserInfo = {
+      username: "john_123",
+      firstName: "John",
+      lastName: "Doe",
+      password: "test123"
+    };
+
+    const updatedTestUser = await User.updateUser(
+      newTestUser.id,
+      updatedTestUserInfo.username,
+      updatedTestUserInfo.firstName,
+      updatedTestUserInfo.lastName,
+      updatedTestUserInfo.password
+    );
+
+    expect(updatedTestUser).toMatchObject({
+      id: expect.stringMatching(newTestUser.id),
+      username: expect.stringMatching(updatedTestUserInfo.username),
+      first_name: expect.stringMatching(updatedTestUserInfo.firstName),
+      last_name: expect.stringMatching(updatedTestUserInfo.lastName),
+      created_on: newTestUser.created_on,
+      password: expect.stringMatching(updatedTestUserInfo.password),
+    });
+
+    newTestUser = updatedTestUser;
   });
 
   it("should delete a user", async () => {
-    // Test code for deleting a user
+    const deletedUser = await User.deleteUser(newTestUser.id);
+
+    expect(deletedUser).toMatchObject({
+      id: expect.stringMatching(newTestUser.id),
+      username: expect.stringMatching(newTestUser.username),
+      first_name: expect.stringMatching(newTestUser.first_name),
+      last_name: expect.stringMatching(newTestUser.last_name),
+      created_on: newTestUser.created_on,
+      password: expect.stringMatching(newTestUser.password),
+    });
   });
 });
