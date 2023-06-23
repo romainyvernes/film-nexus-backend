@@ -1,15 +1,5 @@
 import pool from "../db";
 
-export const getUsers = async () => {
-  const client = await pool.connect();
-  try {
-    const result = await client.query('SELECT * FROM users');
-    return result.rows;
-  } finally {
-    client.release();
-  }
-};
-
 export const getUserById = async (id) => {
   const client = await pool.connect();
   try {
