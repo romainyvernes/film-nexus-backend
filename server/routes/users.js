@@ -3,9 +3,13 @@ import {
   getUserById,
   updateUser,
   deleteUser,
+  createUser,
 } from "../controllers/UserController";
 
 const router = Router();
+
+/* POST create new user */
+router.post("/", createUser);
 
 /* GET one user */
 router.get("/:id", getUserById);
