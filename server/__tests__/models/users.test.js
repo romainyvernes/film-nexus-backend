@@ -29,7 +29,7 @@ describe("User Model", () => {
       first_name: expect.stringMatching(newTestUserInfo.firstName),
       last_name: expect.stringMatching(newTestUserInfo.lastName),
       created_on: expect.any(Date),
-      password: expect.stringMatching(newTestUserInfo.password),
+      password: expect.not.stringMatching(newTestUserInfo.password),
     });
   });
 
@@ -42,16 +42,17 @@ describe("User Model", () => {
       first_name: expect.stringMatching(newTestUserInfo.firstName),
       last_name: expect.stringMatching(newTestUserInfo.lastName),
       created_on: newTestUser.created_on,
-      password: expect.stringMatching(newTestUser.password),
+      password: expect.not.stringMatching(newTestUser.password),
     });
   });
 
-  it("should update a user", async () => {
+  it("should update a user, including their password", async () => {
     const updatedTestUser = await User.updateUser(
       newTestUser.id,
       updatedTestUserInfo.username,
       updatedTestUserInfo.firstName,
       updatedTestUserInfo.lastName,
+      newTestUserInfo.password,
       updatedTestUserInfo.password
     );
 
@@ -61,8 +62,11 @@ describe("User Model", () => {
       first_name: expect.stringMatching(updatedTestUserInfo.firstName),
       last_name: expect.stringMatching(updatedTestUserInfo.lastName),
       created_on: newTestUser.created_on,
-      password: expect.stringMatching(updatedTestUserInfo.password),
+      password: expect.any(String),
     });
+
+    expect(updatedTestUser.password).not.toEqual(updatedTestUserInfo.password);
+    expect(updatedTestUser.password).not.toEqual(newTestUser.password);
 
     newTestUser = updatedTestUser;
   });
@@ -76,7 +80,7 @@ describe("User Model", () => {
       first_name: expect.stringMatching(newTestUser.first_name),
       last_name: expect.stringMatching(newTestUser.last_name),
       created_on: newTestUser.created_on,
-      password: expect.stringMatching(newTestUser.password),
+      password: newTestUser.password,
     });
   });
 });
