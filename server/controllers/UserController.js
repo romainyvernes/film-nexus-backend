@@ -1,63 +1,79 @@
 import * as User from '../models/User';
 
-export const getAllUsers = async (req, res) => {
+export const getUserById = async (req, res) => {
+  const id = req.params.id;
   try {
-    const users = await User.getUsers();
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-export const getUserByUsername = async (req, res) => {
-  const username = req.params.username;
-  try {
-    const user = await User.getUserByUsername(username);
+    const user = await User.getUserById(id);
     if (user) {
-      res.json(user);
+      const { password, ...sanitizedUser } = user;
+      res.json(sanitizedUser);
     } else {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving user' });
+    res.status(500).json({ message: error.message || 'Error retrieving user' });
   }
 };
 
 export const createUser = async (req, res) => {
-  const { name, email } = req.body;
+  const {
+    username,
+    firstName,
+    lastName,
+    password,
+  } = req.body;
   try {
-    const createdUser = await User.createUser(name, email);
+    const createdUser = await User.createUser(
+      username,
+      firstName,
+      lastName,
+      password
+    );
     res.status(201).json(createdUser);
   } catch (error) {
-    res.status(500).json({ message: 'Error creating user' });
+    res.status(500).json({ message: error.message || 'Error creating user' });
   }
 };
 
 export const updateUser = async (req, res) => {
-  const userId = req.params.id;
-  const { name, email } = req.body;
+  const id = req.params.id;
+  const {
+    username,
+    firstName,
+    lastName,
+    currentPassword,
+    newPassword,
+  } = req.body;
   try {
-    const updatedUser = await User.updateUser(userId, name, email);
+    const updatedUser = await User.updateUser(
+      id,
+      username,
+      firstName,
+      lastName,
+      currentPassword,
+      newPassword
+    );
     if (updatedUser) {
       res.json(updatedUser);
     } else {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error updating user' });
+    res.status(500).json({ message: error.message || 'Error updating user' });
   }
 };
 
 export const deleteUser = async (req, res) => {
-  const userId = req.params.id;
+  const id = req.params.id;
+  const { currentPassword } = req.body;
   try {
-    const deletedUser = await User.deleteUser(userId);
+    const deletedUser = await User.deleteUser(id, currentPassword);
     if (deletedUser) {
-      res.json(deletedUser);
+      res.sendStatus(200);
     } else {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Error deleting user' });
+    res.status(500).json({ message: error.message || 'Error deleting user' });
   }
 };

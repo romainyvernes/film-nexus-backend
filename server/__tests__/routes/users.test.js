@@ -1,41 +1,87 @@
-// import request from 'supertest';
+import request from 'supertest';
 import app from '../../app';
-import UserModel from '../../models/User';
-import { Pool } from 'pg';
+import pool from "../../db";
+import { clearDb, populateDb } from "../utils/helpers";
+import { incorrectPassword, newTestUserInfo, updatedTestUserInfo } from "../utils/testData";
 
-// describe('Users Routes', () => {
-//   let pool;
+describe('Users Routes', () => {
+  beforeAll(async () => {
+    await populateDb();
+  });
 
-//   beforeAll(async () => {
-//     pool = new Pool({
-//       connectionString: 'postgresql://username:password@localhost:5432/myapp_testing',
-//     });
+  afterAll(async () => {
+    await clearDb();
+    await pool.end();
+  });
 
-//     await pool.query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name TEXT, email TEXT)');
-//   });
+  let newUser;
 
-//   afterAll(async () => {
-//     await pool.query('DROP TABLE IF EXISTS users');
-//     await pool.end();
-//   });
+  it('POST Create a new user', async () => {
+    const response = await request(app)
+      .post("/api/users")
+      .send(newTestUserInfo)
+      .set('Accept', 'application/json');
 
-//   it('should get all users', async () => {
-//     // Test code for getting all users
-//   });
+    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.status).toEqual(201);
 
-//   it('should create a new user', async () => {
-//     // Test code for creating a new user
-//   });
+    newUser = response.body;
+  });
 
-//   it('should get a specific user', async () => {
-//     // Test code for getting a specific user
-//   });
+  it('GET Retrieve a specific user', async () => {
+    const response = await request(app)
+      .get(`/api/users/${newUser.id}`)
+      .set('Accept', 'application/json');
 
-//   it('should update a specific user', async () => {
-//     // Test code for updating a specific user
-//   });
+    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.status).toEqual(200);
+    expect(response.body).toEqual(newUser);
+    expect(response.body.password).toBeUndefined();
+  });
 
-//   it('should delete a specific user', async () => {
-//     // Test code for deleting a specific user
-//   });
-// });
+  it('PUT Prevent update of a specific user without credentials', async () => {
+    const response = await request(app)
+      .put(`/api/users/${newUser.id}`)
+      .send({
+        ...updatedTestUserInfo,
+        currentPassword: incorrectPassword,
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.status).toEqual(500);
+  });
+
+  it('PUT Update a specific user with proper credentials', async () => {
+    const response = await request(app)
+      .put(`/api/users/${newUser.id}`)
+      .send({
+        ...updatedTestUserInfo,
+        currentPassword: newTestUserInfo.password,
+        newPassword: updatedTestUserInfo.password
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.status).toEqual(200);
+    expect(response.body.password).toBeUndefined();
+  });
+
+  it('DELETE Prevent removal of a specific user without credentials', async () => {
+    const response = await request(app)
+      .delete(`/api/users/${newUser.id}`)
+      .set('Accept', 'application/json');
+
+    expect(response.status).toEqual(500);
+  });
+
+  it('DELETE Remove a specific user with proper credentials', async () => {
+    const response = await request(app)
+      .delete(`/api/users/${newUser.id}`)
+      .send({
+        currentPassword: updatedTestUserInfo.password
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.status).toEqual(200);
+  });
+});
