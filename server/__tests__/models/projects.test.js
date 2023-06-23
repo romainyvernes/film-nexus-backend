@@ -1,7 +1,7 @@
 import * as Project from '../../models/Project';
 import pool from "../../db";
 import { clearDb, populateDb } from "../utils/helpers";
-import { v4 as uuidv4 } from 'uuid';
+import { projectInfo, newProjectName } from "../utils/testData";
 
 describe('Project Model', () => {
   beforeAll(async () => {
@@ -12,11 +12,6 @@ describe('Project Model', () => {
     await clearDb();
     await pool.end();
   });
-
-  const projectInfo = {
-    name: "Test Project",
-    creatorId: uuidv4()
-  };
 
   let newProject;
 
@@ -54,8 +49,6 @@ describe('Project Model', () => {
   });
 
   it('should update a project', async () => {
-    const newProjectName = "Updated Project";
-
     const updatedProject = await Project.updateProject(
       newProject.id,
       newProjectName

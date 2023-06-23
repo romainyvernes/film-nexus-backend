@@ -1,6 +1,7 @@
 import * as User from "../../models/User";
 import pool from "../../db";
 import { clearDb, populateDb } from "../utils/helpers";
+import { newTestUserInfo, updatedTestUserInfo } from "../utils/testData";
 
 describe("User Model", () => {
   beforeAll(async () => {
@@ -11,13 +12,6 @@ describe("User Model", () => {
     await clearDb();
     await pool.end();
   });
-
-  const newTestUserInfo = {
-    username: "test_user",
-    firstName: "test",
-    lastName: "testy",
-    password: "password123"
-  };
 
   let newTestUser;
 
@@ -53,13 +47,6 @@ describe("User Model", () => {
   });
 
   it("should update a user", async () => {
-    const updatedTestUserInfo = {
-      username: "john_123",
-      firstName: "John",
-      lastName: "Doe",
-      password: "test123"
-    };
-
     const updatedTestUser = await User.updateUser(
       newTestUser.id,
       updatedTestUserInfo.username,
