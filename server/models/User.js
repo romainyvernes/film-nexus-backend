@@ -7,7 +7,11 @@ export const getUserById = async (id) => {
   const client = await pool.connect();
   try {
     const result = await client.query(
-      'SELECT * FROM users WHERE id = $1',
+      `
+        SELECT *
+        FROM users
+        WHERE id = $1
+      `,
       [id]
     );
     return result.rows[0];
@@ -20,7 +24,11 @@ export const getUserByUsername = async (username) => {
   const client = await pool.connect();
   try {
     const result = await client.query(
-      'SELECT * FROM users WHERE username = $1',
+      `
+        SELECT id, username, created_on, first_name, last_name
+        FROM users
+        WHERE username = $1
+      `,
       [username]
     );
     return result.rows[0];
@@ -44,7 +52,11 @@ export const createUser = async (
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const result = await client.query(
-      'INSERT INTO users (username, first_name, last_name, password) VALUES ($1, $2, $3, $4) RETURNING *',
+      `
+        INSERT INTO users (username, first_name, last_name, password)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, username, created_on, first_name, last_name
+      `,
       [username, firstName, lastName, hashedPassword]
     );
     return result.rows[0];
@@ -71,12 +83,22 @@ export const updateUser = async (
       if (newPassword) {
         const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
         result = await client.query(
-          'UPDATE users SET username = $1, first_name = $2, last_name = $3, password = $4 WHERE id = $5 RETURNING *',
+          `
+            UPDATE users
+            SET username = $1, first_name = $2, last_name = $3, password = $4
+            WHERE id = $5
+            RETURNING id, username, created_on, first_name, last_name
+          `,
           [username, firstName, lastName, hashedPassword, id]
         );
       } else {
         result = await client.query(
-          'UPDATE users SET username = $1, first_name = $2, last_name = $3 WHERE id = $4 RETURNING *',
+          `
+            UPDATE users
+            SET username = $1, first_name = $2, last_name = $3
+            WHERE id = $4
+            RETURNING id, username, created_on, first_name, last_name
+          `,
           [username, firstName, lastName, id]
         );
       }
@@ -84,21 +106,29 @@ export const updateUser = async (
     } else {
       throw new Error("Incorrect password");
     }
-  } catch(error) {
-    return error;
   } finally {
     client.release();
   }
 };
 
-export const deleteUser = async (id) => {
+export const deleteUser = async (id, currentPassword) => {
   const client = await pool.connect();
   try {
-    const result = await client.query(
-      'DELETE FROM users WHERE id = $1 RETURNING *',
-      [id]
-    );
-    return result.rows[0];
+    const user = await getUserById(id);
+    const isAuthenticated = await bcrypt.compare(currentPassword, user.password);
+    if (isAuthenticated) {
+      const result = await client.query(
+        `
+          DELETE FROM users
+          WHERE id = $1
+          RETURNING id, username, created_on, first_name, last_name
+        `,
+        [id]
+      );
+      return result.rows[0];
+    } else {
+      throw new Error("Incorrect password");
+    }
   } finally {
     client.release();
   }

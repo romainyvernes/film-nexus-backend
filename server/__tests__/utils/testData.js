@@ -20,3 +20,5 @@ export const projectInfo = {
 };
 
 export const newProjectName = "Updated Project";
+
+export const incorrectPassword = "incorrect_password";
