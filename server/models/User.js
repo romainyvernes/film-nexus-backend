@@ -65,43 +65,32 @@ export const createUser = async (
   }
 };
 
-export const updateUser = async (
-  id,
-  username,
-  firstName,
-  lastName,
-  currentPassword,
-  newPassword = null,
-) => {
+export const updateUser = async (id, currentPassword, updatedFields) => {
   const client = await pool.connect();
   try {
     const user = await getUserById(id);
     const isAuthenticated = await bcrypt.compare(currentPassword, user.password);
 
     if (isAuthenticated) {
-      let result;
-      if (newPassword) {
-        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-        result = await client.query(
-          `
-            UPDATE users
-            SET username = $1, first_name = $2, last_name = $3, password = $4
-            WHERE id = $5
-            RETURNING id, username, created_on, first_name, last_name
-          `,
-          [username, firstName, lastName, hashedPassword, id]
-        );
-      } else {
-        result = await client.query(
-          `
-            UPDATE users
-            SET username = $1, first_name = $2, last_name = $3
-            WHERE id = $4
-            RETURNING id, username, created_on, first_name, last_name
-          `,
-          [username, firstName, lastName, id]
-        );
+      const fieldsToUpdate = {...updatedFields};
+      if (fieldsToUpdate.password) {
+        fieldsToUpdate.password = await bcrypt.hash(fieldsToUpdate.password, saltRounds);
       }
+      const updateColumns = Object.keys(fieldsToUpdate);
+      if (updateColumns.length === 0) {
+        throw new Error("At least one updated value is required");
+      }
+      const updateValues = Object.values(fieldsToUpdate);
+      const updateParams = updateColumns.map((col, index) => `${col} = $${index + 2}`);
+      const result = await client.query(
+        `
+          UPDATE users
+          SET ${updateParams.join(", ")}
+          WHERE id = $1
+          RETURNING id, username, created_on, first_name, last_name
+        `,
+        [id, ...updateValues]
+      );
       return result.rows[0];
     } else {
       throw new Error("Incorrect password");

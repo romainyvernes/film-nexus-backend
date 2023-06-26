@@ -47,11 +47,13 @@ export const updateUser = async (req, res) => {
   try {
     const updatedUser = await User.updateUser(
       id,
-      username,
-      firstName,
-      lastName,
       currentPassword,
-      newPassword
+      {
+        username,
+        first_name: firstName,
+        last_name: lastName,
+        password: newPassword
+      }
     );
     if (updatedUser) {
       res.json(updatedUser);

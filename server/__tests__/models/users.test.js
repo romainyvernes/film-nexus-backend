@@ -70,27 +70,37 @@ describe("User Model", () => {
   it("should NOT update a user without proper credentials", async () => {
     await expect(User.updateUser(
       newTestUser.id,
-      updatedTestUserInfo.username,
-      updatedTestUserInfo.firstName,
-      updatedTestUserInfo.lastName,
       incorrectPassword,
-      updatedTestUserInfo.password
+      {
+        first_name: updatedTestUserInfo.firstName,
+        last_name: updatedTestUserInfo.lastName,
+        password: updatedTestUserInfo.password,
+      }
     )).rejects.toThrow("Incorrect password");
   });
 
-  it("should update a user", async () => {
+  it("should NOT update a user with proper credentials but no value to update", async () => {
+    await expect(User.updateUser(
+      newTestUser.id,
+      newTestUserInfo.password,
+      {}
+    )).rejects.toThrow("At least one updated value is required");
+  });
+
+  it("should update a user with proper credentials", async () => {
     const updatedTestUser = await User.updateUser(
       newTestUser.id,
-      updatedTestUserInfo.username,
-      updatedTestUserInfo.firstName,
-      updatedTestUserInfo.lastName,
       newTestUserInfo.password,
-      updatedTestUserInfo.password
+      {
+        first_name: updatedTestUserInfo.firstName,
+        last_name: updatedTestUserInfo.lastName,
+        password: updatedTestUserInfo.password
+      }
     );
 
     expect(updatedTestUser).toEqual({
       id: expect.stringMatching(newTestUser.id),
-      username: expect.stringMatching(updatedTestUserInfo.username),
+      username: expect.stringMatching(newTestUser.username),
       first_name: expect.stringMatching(updatedTestUserInfo.firstName),
       last_name: expect.stringMatching(updatedTestUserInfo.lastName),
       created_on: newTestUser.created_on,
@@ -106,7 +116,7 @@ describe("User Model", () => {
     )).rejects.toThrow("Incorrect password");
   });
 
-  it("should delete a user", async () => {
+  it("should delete a user with proper credentials", async () => {
     const deletedUser = await User.deleteUser(
       newTestUser.id, updatedTestUserInfo.password
     );
