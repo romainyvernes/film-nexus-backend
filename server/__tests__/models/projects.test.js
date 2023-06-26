@@ -21,7 +21,7 @@ describe('Project Model', () => {
       projectInfo.creatorId
     );
 
-    expect(newProject).toMatchObject({
+    expect(newProject).toEqual({
       id: expect.any(String),
       name: expect.stringMatching(projectInfo.name),
       created_on: expect.any(Date),
@@ -32,7 +32,7 @@ describe('Project Model', () => {
   it('should find a project by ID', async () => {
     const project = await Project.getProjectById(newProject.id);
 
-    expect(project).toMatchObject({
+    expect(project).toEqual({
       id: expect.stringMatching(newProject.id),
       name: expect.stringMatching(projectInfo.name),
       created_on: newProject.created_on,
@@ -54,7 +54,7 @@ describe('Project Model', () => {
       newProjectName
     );
 
-    expect(updatedProject).toMatchObject({
+    expect(updatedProject).toEqual({
       id: expect.stringMatching(newProject.id),
       name: expect.stringMatching(newProjectName),
       created_on: newProject.created_on,
@@ -67,7 +67,7 @@ describe('Project Model', () => {
   it('should delete a project', async () => {
     const deletedProject = await Project.deleteProject(newProject.id);
 
-    expect(deletedProject).toMatchObject({
+    expect(deletedProject).toEqual({
       id: expect.stringMatching(newProject.id),
       name: expect.stringMatching(newProject.name),
       created_on: newProject.created_on,
