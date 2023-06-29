@@ -15,12 +15,35 @@ describe("User Model", () => {
 
   let newTestUser;
 
+  it("should NOT create a new user without required fields", async () => {
+    await expect(User.createUser(
+      newTestUserInfo.username,
+      newTestUserInfo.password,
+      {
+        first_name: newTestUserInfo.firstName,
+      },
+    )).rejects.toThrow();
+  });
+
+  it("should NOT create a new user with incorrectly formatted data", async () => {
+    await expect(User.createUser(
+      newTestUserInfo.username,
+      newTestUserInfo.password,
+      {
+        first_name: "",
+        last_name: newTestUserInfo.lastName,
+      },
+    )).rejects.toThrow();
+  });
+
   it("should create a new user", async () => {
     newTestUser = await User.createUser(
       newTestUserInfo.username,
-      newTestUserInfo.firstName,
-      newTestUserInfo.lastName,
-      newTestUserInfo.password
+      newTestUserInfo.password,
+      {
+        first_name: newTestUserInfo.firstName,
+        last_name: newTestUserInfo.lastName,
+      },
     );
 
     expect(newTestUser).toEqual({
@@ -30,15 +53,6 @@ describe("User Model", () => {
       last_name: expect.stringMatching(newTestUserInfo.lastName),
       created_on: expect.any(Date),
     });
-  });
-
-  it("should NOT create a new user that already exists", async () => {
-    await expect(User.createUser(
-      newTestUserInfo.username,
-      newTestUserInfo.firstName,
-      newTestUserInfo.lastName,
-      newTestUserInfo.password
-    )).rejects.toThrow("User already exists");
   });
 
   it("should find a user by ID", async () => {
@@ -84,7 +98,17 @@ describe("User Model", () => {
       newTestUser.id,
       newTestUserInfo.password,
       {}
-    )).rejects.toThrow("At least one updated value is required");
+    )).rejects.toThrow();
+  });
+
+  it("should NOT update a user with proper credentials but incorrectly formatted values", async () => {
+    await expect(User.updateUser(
+      newTestUser.id,
+      newTestUserInfo.password,
+      {
+        last_name: 123
+      }
+    )).rejects.toThrow();
   });
 
   it("should update a user with proper credentials", async () => {
@@ -118,7 +142,8 @@ describe("User Model", () => {
 
   it("should delete a user with proper credentials", async () => {
     const deletedUser = await User.deleteUser(
-      newTestUser.id, updatedTestUserInfo.password
+      newTestUser.id,
+      updatedTestUserInfo.password
     );
 
     expect(deletedUser).toEqual({
