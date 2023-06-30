@@ -29,6 +29,12 @@ export const getUserById = async (id) => {
       [id]
     );
     return result.rows[0];
+  } catch(err) {
+    // invalid ID type is akin to not finding the user
+    if (err.message.includes("invalid input syntax for type uuid")) {
+      return undefined;
+    }
+    throw err;
   } finally {
     client.release();
   }
@@ -106,6 +112,9 @@ export const updateUser = async (id, currentPassword, updateFields) => {
   const client = await pool.connect();
   try {
     const user = await getUserById(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
     const isAuthenticated = await bcrypt.compare(currentPassword, user.password);
 
     if (isAuthenticated) {
@@ -137,6 +146,9 @@ export const deleteUser = async (id, currentPassword) => {
   const client = await pool.connect();
   try {
     const user = await getUserById(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
     const isAuthenticated = await bcrypt.compare(currentPassword, user.password);
     if (isAuthenticated) {
       const [{ rows: userRows }, ] = await Promise.all([

@@ -23,11 +23,19 @@ export const createUser = async (req, res) => {
     password,
   } = req.body;
   try {
+    const user = await User.getUserByUsername(username);
+
+    if (user) {
+      return res.status(401).json({ message: "User already exists" });
+    }
+
     const createdUser = await User.createUser(
       username,
-      firstName,
-      lastName,
-      password
+      password,
+      {
+        first_name: firstName,
+        last_name: lastName,
+      }
     );
     res.status(201).json(createdUser);
   } catch (error) {
@@ -55,13 +63,20 @@ export const updateUser = async (req, res) => {
         password: newPassword
       }
     );
-    if (updatedUser) {
-      res.json(updatedUser);
-    } else {
-      res.status(404).json({ message: 'User not found' });
-    }
+    res.json(updatedUser);
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Error updating user' });
+    let errorStatus;
+    switch(error.message.toLowerCase()) {
+      case "incorrect password":
+        errorStatus = 403;
+        break;
+      case "user not found":
+        errorStatus = 404;
+        break;
+      default:
+        errorStatus = 500;
+    }
+    res.status(errorStatus).json({ message: error.message || 'Error updating user' });
   }
 };
 
@@ -76,6 +91,17 @@ export const deleteUser = async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Error deleting user' });
+    let errorStatus;
+    switch(error.message.toLowerCase()) {
+      case "incorrect password":
+        errorStatus = 403;
+        break;
+      case "user not found":
+        errorStatus = 404;
+        break;
+      default:
+        errorStatus = 500;
+    }
+    res.status(errorStatus).json({ message: error.message || 'Error deleting user' });
   }
 };

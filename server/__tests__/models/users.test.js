@@ -68,6 +68,11 @@ describe("User Model", () => {
     });
   });
 
+  it("should return undefined if attempting to retrieve a user with an invalid ID", async () => {
+    const user = await User.getUserById("unknown-id");
+    expect(user).toBeUndefined();
+  });
+
   it("should find a user by username", async () => {
     const user = await User.getUserByUsername(newTestUser.username);
 
@@ -79,6 +84,18 @@ describe("User Model", () => {
       created_on: newTestUser.created_on,
       password: expect.not.stringMatching(newTestUserInfo.password)
     });
+  });
+
+  it("should return user not found error if attempting to update a user with an invalid ID", async () => {
+    await expect(User.updateUser(
+      "unknown-id",
+      newTestUserInfo.password,
+      {
+        first_name: updatedTestUserInfo.firstName,
+        last_name: updatedTestUserInfo.lastName,
+        password: updatedTestUserInfo.password
+      }
+    )).rejects.toThrow("User not found");
   });
 
   it("should NOT update a user without proper credentials", async () => {
@@ -138,6 +155,13 @@ describe("User Model", () => {
       newTestUser.id,
       incorrectPassword
     )).rejects.toThrow("Incorrect password");
+  });
+
+  it("should return undefined if attempting to delete a user with an invalid ID", async () => {
+    await expect(User.deleteUser(
+      "unknown-id",
+      updatedTestUserInfo.password
+    )).rejects.toThrow("User not found");
   });
 
   it("should delete a user with proper credentials", async () => {
