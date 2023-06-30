@@ -139,15 +139,11 @@ export const deleteUser = async (id, currentPassword) => {
     const user = await getUserById(id);
     const isAuthenticated = await bcrypt.compare(currentPassword, user.password);
     if (isAuthenticated) {
-      const result = await client.query(
-        `
-          DELETE FROM users
-          WHERE id = $1
-          RETURNING ${userPropsStr}
-        `,
-        [id]
-      );
-      return result.rows[0];
+      const [{ rows: userRows }, ] = await Promise.all([
+        client.query(`DELETE FROM users WHERE id = $1 RETURNING ${userPropsStr}`, [id]),
+        client.query("DELETE FROM project_members WHERE user_id = $1", [id])
+      ]);
+      return userRows[0];
     } else {
       throw new Error("Incorrect password");
     }
