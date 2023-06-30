@@ -6,13 +6,13 @@ CREATE TABLE IF NOT EXISTS users (
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   password TEXT NOT NULL,
-  created_on TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_on TIMESTAMP NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS projects (
   id UUID NOT NULL PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
-  created_on TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_on TIMESTAMP NOT NULL DEFAULT now(),
   creator_id UUID NOT NULL
 );
 

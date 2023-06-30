@@ -16,7 +16,10 @@ export const updatedTestUserInfo = {
 
 export const projectInfo = {
   name: "Test Project",
-  creatorId: uuidv4()
+};
+
+export const memberInfo = {
+  position: "Director"
 };
 
 export const newProjectName = "Updated Project";
