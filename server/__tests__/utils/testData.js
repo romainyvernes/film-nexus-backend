@@ -22,6 +22,10 @@ export const memberInfo = {
   position: "Director"
 };
 
+export const updatedMemberInfo = {
+  position: "Crew"
+};
+
 export const newProjectName = "Updated Project";
 
 export const incorrectPassword = "incorrect_password";

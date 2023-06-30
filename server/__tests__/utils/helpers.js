@@ -29,6 +29,16 @@ export function addUser(userData) {
   return queryDB(query, values);
 }
 
+export function addProject(projectData) {
+  const { placeholders, values } = getQueryData(projectData);
+  const query = `
+    INSERT INTO projects (${placeholders.columns})
+    VALUES (${placeholders.values})
+    RETURNING *
+  `;
+  return queryDB(query, values);
+}
+
 export function addProjectMember(memberData) {
   const { placeholders, values } = getQueryData(memberData);
   const query = `
