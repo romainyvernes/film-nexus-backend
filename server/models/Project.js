@@ -4,6 +4,7 @@ import * as Member from "./Member";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
 import { userProps } from "./User";
 import { baseSchema as projectBaseSchema, updatedSchema } from "../validation/schemas/Project";
+import { baseSchema as memberBaseSchema } from "../validation/schemas/Member";
 
 // Add additional modifiable fields as needed
 const allowedFields = ["name"];
@@ -70,22 +71,23 @@ export const getProjectById = async (projectId, userId) => {
 };
 
 export const createProject = async (creatorId, projectFields, memberFields) => {
-  const memberSchema = Joi.object({
-    position: Joi.string().required(),
-  });
-
   const { error: projectError } = projectBaseSchema.validate({
     creatorId,
     ...projectFields
   });
-  const { error: schemaError } = memberSchema.validate(memberFields);
+  const { error: memberError } = memberBaseSchema
+    .fork(["isAdmin", "projectId"], (schema) => schema.optional())
+    .validate({
+      userId: creatorId,
+      ...memberFields
+    });
 
   if (projectError) {
     throw new Error(projectError.details[0].message);
   }
 
-  if (schemaError) {
-    throw new Error(schemaError.details[0].message);
+  if (memberError) {
+    throw new Error(memberError.details[0].message);
   }
 
   const filteredFields = getFilteredFields(

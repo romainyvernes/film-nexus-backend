@@ -1,7 +1,11 @@
 import * as User from '../models/User';
+import { baseSchema, updatedSchema } from "../validation/schemas/User";
 
 export const getUserById = async (req, res) => {
   const id = req.params.id;
+  if (!id) {
+    return res.status(400).json({ message: 'User ID is required' });
+  }
   try {
     const user = await User.getUserById(id);
     if (user) {
@@ -16,6 +20,12 @@ export const getUserById = async (req, res) => {
 };
 
 export const createUser = async (req, res) => {
+  const { error } = baseSchema.validate(req.body, { allowUnknown: true });
+
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
   const {
     username,
     firstName,
@@ -33,8 +43,8 @@ export const createUser = async (req, res) => {
       username,
       password,
       {
-        first_name: firstName,
-        last_name: lastName,
+        firstName,
+        lastName,
       }
     );
     res.status(201).json(createdUser);
@@ -44,6 +54,15 @@ export const createUser = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
+  const { error } = updatedSchema.validate(
+    { ...req.body, ...req.params },
+    { allowUnknown: true }
+  );
+
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
   const id = req.params.id;
   const {
     username,
@@ -58,8 +77,8 @@ export const updateUser = async (req, res) => {
       currentPassword,
       {
         username,
-        first_name: firstName,
-        last_name: lastName,
+        firstName,
+        lastName,
         password: newPassword
       }
     );
@@ -81,6 +100,15 @@ export const updateUser = async (req, res) => {
 };
 
 export const deleteUser = async (req, res) => {
+  const { error } = updatedSchema.validate(
+    { ...req.body, ...req.params },
+    { allowUnknown: true }
+  );
+
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
   const id = req.params.id;
   const { currentPassword } = req.body;
   try {

@@ -16,6 +16,19 @@ describe('Users Routes', () => {
 
   let newUser;
 
+  it('POST Attempting to create a user without required fields returns a 400 error', async () => {
+    const response = await request(app)
+      .post("/api/users")
+      .send({
+        username: newTestUserInfo.username,
+        password: newTestUserInfo.password
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.status).toBe(400);
+  });
+
   it('POST Create a new user', async () => {
     const response = await request(app)
       .post("/api/users")
@@ -110,6 +123,9 @@ describe('Users Routes', () => {
   it('DELETE Update a specific user with unknown id', async () => {
     const response = await request(app)
       .delete(`/api/users/unknown-id`)
+      .send({
+        currentPassword: updatedTestUserInfo.password
+      })
       .set('Accept', 'application/json');
 
     expect(response.headers["content-type"]).toMatch(/json/);
