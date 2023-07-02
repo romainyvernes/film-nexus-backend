@@ -20,7 +20,7 @@ describe("User Model", () => {
       newTestUserInfo.username,
       newTestUserInfo.password,
       {
-        first_name: newTestUserInfo.firstName,
+        firstName: newTestUserInfo.firstName,
       },
     )).rejects.toThrow();
   });
@@ -30,8 +30,8 @@ describe("User Model", () => {
       newTestUserInfo.username,
       newTestUserInfo.password,
       {
-        first_name: "",
-        last_name: newTestUserInfo.lastName,
+        firstName: "",
+        lastName: newTestUserInfo.lastName,
       },
     )).rejects.toThrow();
   });
@@ -41,8 +41,8 @@ describe("User Model", () => {
       newTestUserInfo.username,
       newTestUserInfo.password,
       {
-        first_name: newTestUserInfo.firstName,
-        last_name: newTestUserInfo.lastName,
+        firstName: newTestUserInfo.firstName,
+        lastName: newTestUserInfo.lastName,
       },
     );
 
@@ -91,8 +91,8 @@ describe("User Model", () => {
       "unknown-id",
       newTestUserInfo.password,
       {
-        first_name: updatedTestUserInfo.firstName,
-        last_name: updatedTestUserInfo.lastName,
+        firstName: updatedTestUserInfo.firstName,
+        lastName: updatedTestUserInfo.lastName,
         password: updatedTestUserInfo.password
       }
     )).rejects.toThrow("User not found");
@@ -103,8 +103,8 @@ describe("User Model", () => {
       newTestUser.id,
       incorrectPassword,
       {
-        first_name: updatedTestUserInfo.firstName,
-        last_name: updatedTestUserInfo.lastName,
+        firstName: updatedTestUserInfo.firstName,
+        lastName: updatedTestUserInfo.lastName,
         password: updatedTestUserInfo.password,
       }
     )).rejects.toThrow("Incorrect password");
@@ -123,7 +123,7 @@ describe("User Model", () => {
       newTestUser.id,
       newTestUserInfo.password,
       {
-        last_name: 123
+        lastName: 123
       }
     )).rejects.toThrow();
   });
@@ -133,8 +133,8 @@ describe("User Model", () => {
       newTestUser.id,
       newTestUserInfo.password,
       {
-        first_name: updatedTestUserInfo.firstName,
-        last_name: updatedTestUserInfo.lastName,
+        firstName: updatedTestUserInfo.firstName,
+        lastName: updatedTestUserInfo.lastName,
         password: updatedTestUserInfo.password
       }
     );

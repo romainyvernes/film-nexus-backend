@@ -1,7 +1,7 @@
 import fs from "fs";
 import pool from "../../db";
 import path from "path";
-import { getQueryData } from "../../utils/helpers";
+import { formatKeysToSnakeCase, getQueryData } from "../../utils/helpers";
 
 export function populateDb() {
   // Read the database.sql file
@@ -20,7 +20,7 @@ export async function queryDB(query, values) {
 }
 
 export function addUser(userData) {
-  const { placeholders, values } = getQueryData(userData);
+  const { placeholders, values } = getQueryData(formatKeysToSnakeCase(userData));
   const query = `
     INSERT INTO users (${placeholders.columns})
     VALUES (${placeholders.values})
@@ -30,7 +30,7 @@ export function addUser(userData) {
 }
 
 export function addProject(projectData) {
-  const { placeholders, values } = getQueryData(projectData);
+  const { placeholders, values } = getQueryData((formatKeysToSnakeCase(projectData)));
   const query = `
     INSERT INTO projects (${placeholders.columns})
     VALUES (${placeholders.values})
@@ -40,7 +40,7 @@ export function addProject(projectData) {
 }
 
 export function addProjectMember(memberData) {
-  const { placeholders, values } = getQueryData(memberData);
+  const { placeholders, values } = getQueryData(formatKeysToSnakeCase(memberData));
   const query = `
     INSERT INTO project_members (${placeholders.columns})
     VALUES (${placeholders.values})

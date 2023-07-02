@@ -1,14 +1,12 @@
-import { v4 as uuidv4 } from 'uuid';
-
 export const newTestUserInfo = {
-  username: "test_user",
+  username: "testuser",
   firstName: "test",
   lastName: "testy",
   password: "password123"
 };
 
 export const updatedTestUserInfo = {
-  username: "john_123",
+  username: "john123",
   firstName: "John",
   lastName: "Doe",
   password: "test123"

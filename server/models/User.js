@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import Joi from "joi";
 import pool from "../db";
-import { getFilteredFields, getQueryData } from "../utils/helpers";
+import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
+import { baseSchema, updatedSchema } from "../validation/schemas/User";
 
 // Add additional modifiable fields as needed
 const allowedFields = ["username", "first_name", "last_name"];
@@ -62,14 +63,7 @@ export const createUser = async (
   password,
   fields,
 ) => {
-  const schema = Joi.object({
-    username: Joi.string().required().min(3).max(20),
-    first_name: Joi.string().required(),
-    last_name: Joi.string().required(),
-    password: Joi.string().required().min(6),
-  });
-
-  const { error } = schema.validate({ username, password, ...fields });
+  const { error } = baseSchema.validate({ username, password, ...fields });
 
   if (error) {
     throw new Error(error.details[0].message);
@@ -79,7 +73,11 @@ export const createUser = async (
   try {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const excludedFields = ["username"];
-    const filteredFields = getFilteredFields(fields, allowedFields, excludedFields);
+    const filteredFields = getFilteredFields(
+      formatKeysToSnakeCase(fields),
+      allowedFields,
+      excludedFields
+    );
     const { values, placeholders } = getQueryData(filteredFields, false, 3);
     const result = await client.query(
       `
@@ -96,14 +94,11 @@ export const createUser = async (
 };
 
 export const updateUser = async (id, currentPassword, updateFields) => {
-  const schema = Joi.object({
-    username: Joi.string().min(3).max(20),
-    first_name: Joi.string(),
-    last_name: Joi.string(),
-    password: Joi.string().min(6),
-  }).min(1);
-
-  const { error } = schema.validate(updateFields);
+  const { error } = updatedSchema.validate({
+    id,
+    currentPassword,
+    ...updateFields
+  });
 
   if (error) {
     throw new Error(error.details[0].message);
@@ -118,10 +113,11 @@ export const updateUser = async (id, currentPassword, updateFields) => {
     const isAuthenticated = await bcrypt.compare(currentPassword, user.password);
 
     if (isAuthenticated) {
-      const fieldsToUpdate = {...updateFields};
+      let fieldsToUpdate = {...updateFields};
       if (fieldsToUpdate.password) {
         fieldsToUpdate.password = await bcrypt.hash(fieldsToUpdate.password, saltRounds);
       }
+      fieldsToUpdate = formatKeysToSnakeCase(fieldsToUpdate);
       const { values, params } = getQueryData(fieldsToUpdate, true, 2);
 
       const result = await client.query(

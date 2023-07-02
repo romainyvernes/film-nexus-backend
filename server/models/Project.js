@@ -1,8 +1,9 @@
 import Joi from "joi";
 import pool from "../db";
 import * as Member from "./Member";
-import { getFilteredFields, getQueryData } from "../utils/helpers";
+import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
 import { userProps } from "./User";
+import { baseSchema as projectBaseSchema, updatedSchema } from "../validation/schemas/Project";
 
 // Add additional modifiable fields as needed
 const allowedFields = ["name"];
@@ -69,17 +70,12 @@ export const getProjectById = async (projectId, userId) => {
 };
 
 export const createProject = async (creatorId, projectFields, memberFields) => {
-  const projectSchema = Joi.object({
-    name: Joi.string().required(),
-    creator_id: Joi.string().uuid().required(),
-  });
-
   const memberSchema = Joi.object({
     position: Joi.string().required(),
   });
 
-  const { error: projectError } = projectSchema.validate({
-    creator_id: creatorId,
+  const { error: projectError } = projectBaseSchema.validate({
+    creatorId,
     ...projectFields
   });
   const { error: schemaError } = memberSchema.validate(memberFields);
@@ -92,7 +88,10 @@ export const createProject = async (creatorId, projectFields, memberFields) => {
     throw new Error(schemaError.details[0].message);
   }
 
-  const filteredFields = getFilteredFields(projectFields, allowedFields);
+  const filteredFields = getFilteredFields(
+    formatKeysToSnakeCase(projectFields),
+    allowedFields
+  );
   const { values, placeholders } = getQueryData(filteredFields, false, 2);
 
   const client = await pool.connect();
@@ -113,7 +112,7 @@ export const createProject = async (creatorId, projectFields, memberFields) => {
       creatorId,
       {
         ...memberFields,
-        is_admin: true
+        isAdmin: true
       }
     );
     return result.rows[0];
@@ -123,17 +122,19 @@ export const createProject = async (creatorId, projectFields, memberFields) => {
 };
 
 export const updateProject = async (projectId, userId, updateFields) => {
-  const schema = Joi.object({
-    name: Joi.string(),
-  }).min(1);
-
-  const { error } = schema.validate(updateFields);
+  const { error } = updatedSchema.validate({
+    id: projectId,
+    ...updateFields
+  });
 
   if (error) {
     throw new Error(error.details[0].message);
   }
 
-  const filteredFields = getFilteredFields(updateFields, allowedFields);
+  const filteredFields = getFilteredFields(
+    formatKeysToSnakeCase(updateFields),
+    allowedFields
+  );
   const { values, params } = getQueryData(filteredFields, true, 3);
 
   const client = await pool.connect();

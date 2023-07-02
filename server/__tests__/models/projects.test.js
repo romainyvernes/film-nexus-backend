@@ -10,8 +10,8 @@ describe('Project Model', () => {
     // create new user in DB
     user = await addUser({
       username: newTestUserInfo.username,
-      first_name: newTestUserInfo.firstName,
-      last_name: newTestUserInfo.lastName,
+      firstName: newTestUserInfo.firstName,
+      lastName: newTestUserInfo.lastName,
       password: newTestUserInfo.password,
     });
   });
@@ -103,16 +103,16 @@ describe('Project Model', () => {
     // create second user in DB
     secondUser = await addUser({
       username: "some user",
-      first_name: "Testy",
-      last_name: "Test",
+      firstName: "Testy",
+      lastName: "Test",
       password: "testuser123",
     });
 
     nonAdminMember = await addProjectMember({
-      project_id: newProject.id,
-      user_id: secondUser.id,
+      projectId: newProject.id,
+      userId: secondUser.id,
       position: "Crew",
-      is_admin: false,
+      isAdmin: false,
     });
 
     await expect(Project.updateProject(

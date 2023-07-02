@@ -11,14 +11,14 @@ describe('Member Model', () => {
     // create new user in DB
     user = await addUser({
       username: newTestUserInfo.username,
-      first_name: newTestUserInfo.firstName,
-      last_name: newTestUserInfo.lastName,
+      firstName: newTestUserInfo.firstName,
+      lastName: newTestUserInfo.lastName,
       password: newTestUserInfo.password,
     });
     // add new project in DB
     project = await addProject({
       name: projectInfo.name,
-      creator_id: user.id,
+      creatorId: user.id,
     });
   });
 
@@ -43,7 +43,7 @@ describe('Member Model', () => {
       user.id,
       {
         position: "",
-        is_admin: true,
+        isAdmin: true,
       },
     )).rejects.toThrow();
   });
@@ -54,7 +54,7 @@ describe('Member Model', () => {
       user.id,
       {
         position: memberInfo.position,
-        is_admin: true,
+        isAdmin: true,
       },
     );
 
@@ -103,8 +103,8 @@ describe('Member Model', () => {
   it('should NOT update a project member if user doesn\'t have admin access', async () => {
     secondUser = await addUser({
       username: "second_user",
-      first_name: "Second",
-      last_name: "User",
+      firstName: "Second",
+      lastName: "User",
       password: "password123",
     });
 
@@ -113,7 +113,7 @@ describe('Member Model', () => {
       secondUser.id,
       {
         position: "Crew",
-        is_admin: false,
+        isAdmin: false,
       },
     );
 

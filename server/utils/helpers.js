@@ -1,3 +1,5 @@
+import _ from "lodash";
+
 export const getFilteredFields = (updateFields, allowedFields, excludedFields = []) => {
   return Object.keys(updateFields)
     .filter((field) => allowedFields.includes(field) && !excludedFields.includes(field))
@@ -29,4 +31,15 @@ export const getQueryData = (fields, isUpdate = false, indexOffset = 1) => {
     values,
     ...data,
   };
+};
+
+export const formatKeysToSnakeCase = (obj) => {
+  const snakeCaseObj = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const snakeCaseKey = _.snakeCase(key).toLowerCase();
+      snakeCaseObj[snakeCaseKey] = obj[key];
+    }
+  }
+  return snakeCaseObj;
 };

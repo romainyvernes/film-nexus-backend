@@ -1,6 +1,7 @@
 import Joi from "joi";
 import pool from "../db";
-import { getFilteredFields, getQueryData } from "../utils/helpers";
+import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
+import { baseSchema, updatedSchema } from "../validation/schemas/Member";
 
 // Add additional modifiable fields as needed
 const allowedFields = ["position", "is_admin"];
@@ -11,16 +12,9 @@ export const memberProps = [
 ];
 
 export const createMember = async (projectId, userId, fields) => {
-  const schema = Joi.object({
-    project_id: Joi.string().uuid().required(),
-    user_id: Joi.string().uuid().required(),
-    position: Joi.string().required(),
-    is_admin: Joi.boolean().required(),
-  });
-
-  const { error, value } = schema.validate({
-    project_id: projectId,
-    user_id: userId,
+  const { error, value } = baseSchema.validate({
+    projectId: projectId,
+    userId: userId,
     ...fields,
   });
 
@@ -28,7 +22,10 @@ export const createMember = async (projectId, userId, fields) => {
     throw new Error(error.details[0].message);
   }
 
-  const filteredFields = getFilteredFields(fields, allowedFields);
+  const filteredFields = getFilteredFields(
+    formatKeysToSnakeCase(fields),
+    allowedFields
+  );
   const { values, placeholders } = getQueryData(filteredFields, false, 3);
 
   const client = await pool.connect();
@@ -48,12 +45,12 @@ export const createMember = async (projectId, userId, fields) => {
 };
 
 export const updateMember = async (projectId, userId, accessorId, updateFields) => {
-  const schema = Joi.object({
-    position: Joi.string(),
-    is_admin: Joi.boolean(),
-  }).min(1);
-
-  const { error } = schema.validate(updateFields);
+  const { error } = updatedSchema.validate({
+    projectId,
+    userId,
+    accessorId,
+    ...updateFields
+  });
 
   if (error) {
     throw new Error(error.details[0].message);
