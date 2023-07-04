@@ -9,8 +9,7 @@ export const getUserById = async (req, res) => {
   try {
     const user = await User.getUserById(id);
     if (user) {
-      const { password, ...sanitizedUser } = user;
-      res.json(sanitizedUser);
+      res.json(user);
     } else {
       res.status(404).json({ message: 'User not found' });
     }
@@ -72,6 +71,12 @@ export const updateUser = async (req, res) => {
     newPassword,
   } = req.body;
   try {
+    if (username) {
+      const user = await User.getUserByUsername(username);
+      if (user) {
+        return res.status(401).json({ message: "Username already taken" });
+      }
+    }
     const updatedUser = await User.updateUser(
       id,
       currentPassword,

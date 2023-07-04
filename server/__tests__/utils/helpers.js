@@ -1,7 +1,9 @@
 import fs from "fs";
 import pool from "../../db";
 import path from "path";
+import bcrypt from "bcrypt";
 import { formatKeysToSnakeCase, getQueryData } from "../../utils/helpers";
+import { saltRounds } from "../../models/User";
 
 export function populateDb() {
   // Read the database.sql file
@@ -19,8 +21,10 @@ export async function queryDB(query, values) {
   return result.rows[0];
 }
 
-export function addUser(userData) {
-  const { placeholders, values } = getQueryData(formatKeysToSnakeCase(userData));
+export async function addUser(userData) {
+  const data = formatKeysToSnakeCase(userData);
+  data.password = await bcrypt.hash(data.password, saltRounds);
+  const { placeholders, values } = getQueryData(data);
   const query = `
     INSERT INTO users (${placeholders.columns})
     VALUES (${placeholders.values})
