@@ -64,8 +64,8 @@ describe("User Model", () => {
       first_name: expect.stringMatching(newTestUserInfo.firstName),
       last_name: expect.stringMatching(newTestUserInfo.lastName),
       created_on: newTestUser.created_on,
-      password: expect.not.stringMatching(newTestUserInfo.password)
     });
+    expect(user.password).toBeUndefined();
   });
 
   it("should return undefined if attempting to retrieve a user with an invalid ID", async () => {
@@ -82,8 +82,8 @@ describe("User Model", () => {
       first_name: expect.stringMatching(newTestUserInfo.firstName),
       last_name: expect.stringMatching(newTestUserInfo.lastName),
       created_on: newTestUser.created_on,
-      password: expect.not.stringMatching(newTestUserInfo.password)
     });
+    expect(user.password).toBeUndefined();
   });
 
   it("should return user not found error if attempting to update a user with an invalid ID", async () => {

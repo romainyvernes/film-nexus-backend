@@ -16,9 +16,9 @@ export const userProps = [
   "last_name",
 ];
 const userPropsStr = userProps.join(", ");
-const saltRounds = 10;
+export const saltRounds = 10;
 
-export const getUserById = async (id) => {
+export const getUserById = async (id, withPassword = false) => {
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -29,7 +29,11 @@ export const getUserById = async (id) => {
       `,
       [id]
     );
-    return result.rows[0];
+    if (withPassword) {
+      return result.rows[0];
+    }
+    const { password, ...sanitizedUser } = result.rows[0];
+    return sanitizedUser;
   } catch(err) {
     // invalid ID type is akin to not finding the user
     if (err.message.includes("invalid input syntax for type uuid")) {
@@ -106,7 +110,7 @@ export const updateUser = async (id, currentPassword, updateFields) => {
 
   const client = await pool.connect();
   try {
-    const user = await getUserById(id);
+    const user = await getUserById(id, true);
     if (!user) {
       throw new Error("User not found");
     }
@@ -141,7 +145,7 @@ export const updateUser = async (id, currentPassword, updateFields) => {
 export const deleteUser = async (id, currentPassword) => {
   const client = await pool.connect();
   try {
-    const user = await getUserById(id);
+    const user = await getUserById(id, true);
     if (!user) {
       throw new Error("User not found");
     }
