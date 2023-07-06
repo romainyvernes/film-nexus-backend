@@ -16,12 +16,12 @@ router.get("/", getAllProjects);
 router.post("/", createProject);
 
 /* GET one project for logged in user */
-router.get("/:projectId", getProjectById);
+router.get("/:id", getProjectById);
 
 /* PUT update a specific project for logged in user  */
-router.put("/:projectId", updateProject);
+router.put("/:id", updateProject);
 
 /* DELETE a specific project */
-router.delete("/:projectId", deleteProject);
+router.delete("/:id", deleteProject);
 
 export default router;

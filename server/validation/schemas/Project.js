@@ -6,5 +6,5 @@ export const baseSchema = Joi.object({
 });
 
 export const  updatedSchema = baseSchema.append({
-  id: Joi.string().required(),
+  id: Joi.string().uuid().required(),
 }).fork(["name", "creatorId"], (schema) => schema.optional());

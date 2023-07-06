@@ -1,4 +1,3 @@
-import Joi from "joi";
 import pool from "../db";
 import * as Member from "./Member";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
@@ -16,19 +15,31 @@ const projectPropsStr = [
   "creator_id",
 ].map((prop) => `projects.${prop}`).join(", ");
 
-export const getProjects = async (userId) => {
+export const getProjects = async (accessorId) => {
   const client = await pool.connect();
   try {
     const result = await client.query(
       `
-        SELECT ${projectPropsStr}
+        SELECT ${projectPropsStr},
+        (
+          SELECT
+            json_agg(
+              json_build_object(
+                ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+              )
+            )
+          FROM
+            project_members
+            JOIN users ON project_members.user_id = users.id
+          WHERE project_members.project_id = projects.id
+        ) AS members,
+        ${Member.memberProps.map((prop) => `pm.${prop}`).join(", ")}
         FROM
           projects
-          JOIN project_members ON projects.id = project_members.project_id
-        WHERE project_members.user_id = $1
-        ORDER BY projects.creator_id
+          JOIN project_members AS pm ON projects.id = pm.project_id
+        WHERE pm.user_id = $1
       `,
-      [userId]
+      [accessorId]
     );
     return result.rows;
   } finally {
@@ -36,7 +47,20 @@ export const getProjects = async (userId) => {
   }
 };
 
-export const getProjectById = async (projectId, userId) => {
+export const getProjectById = async (projectId, accessorId) => {
+  const { error } = updatedSchema.validate({
+    id: projectId,
+  });
+
+  if (error) {
+    const { message } = error.details[0];
+    if (message.includes("must be a valid GUID")) {
+      return res.status(404).json({ message: "Project not found" });
+    } else {
+      return res.status(400).json({ message });
+    }
+  }
+
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -62,7 +86,7 @@ export const getProjectById = async (projectId, userId) => {
             AND pm.user_id = $1
         WHERE projects.id = $2
       `,
-      [userId, projectId]
+      [accessorId, projectId]
     );
     return result.rows[0];
   } finally {
@@ -123,14 +147,19 @@ export const createProject = async (creatorId, projectFields, memberFields) => {
   }
 };
 
-export const updateProject = async (projectId, userId, updateFields) => {
+export const updateProject = async (projectId, accessorId, updateFields) => {
   const { error } = updatedSchema.validate({
     id: projectId,
     ...updateFields
   });
 
   if (error) {
-    throw new Error(error.details[0].message);
+    const { message } = error.details[0];
+    if (message.includes("must be a valid GUID")) {
+      return res.status(404).json({ message: "Project not found" });
+    } else {
+      return res.status(400).json({ message });
+    }
   }
 
   const filteredFields = getFilteredFields(
@@ -155,18 +184,36 @@ export const updateProject = async (projectId, userId, updateFields) => {
           )
         RETURNING *
       `,
-      [projectId, userId, ...values]
+      [projectId, accessorId, ...values]
     );
+    const updatedProject = await getProjectById(projectId, accessorId);
     if (result.rows.length === 0) {
-      throw new Error("Update failed");
+      if (updatedProject) {
+        throw new Error("Access denied");
+      } else {
+        throw new Error("Project not found");
+      }
     }
-    return await getProjectById(projectId, userId);
+    return updatedProject;
   } finally {
     client.release();
   }
 };
 
-export const deleteProject = async (projectId, userId) => {
+export const deleteProject = async (projectId, accessorId) => {
+  const { error } = updatedSchema.validate({
+    id: projectId,
+  });
+
+  if (error) {
+    const { message } = error.details[0];
+    if (message.includes("must be a valid GUID")) {
+      return res.status(404).json({ message: "Project not found" });
+    } else {
+      return res.status(400).json({ message });
+    }
+  }
+
   const client = await pool.connect();
   try {
     const [{ rows: projectRows }, deletedMembers] = await Promise.all([
@@ -183,13 +230,10 @@ export const deleteProject = async (projectId, userId) => {
             )
           RETURNING *
         `,
-        [projectId, userId]
+        [projectId, accessorId]
       ),
-      Member.deleteMembersByProjectId(projectId, userId),
+      Member.deleteMembersByProjectId(projectId, accessorId),
     ]);
-    if (projectRows.length === 0) {
-      throw new Error("Deletion failed");
-    }
     return {
       ...projectRows[0],
       members: deletedMembers

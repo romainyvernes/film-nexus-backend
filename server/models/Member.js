@@ -1,5 +1,5 @@
-import Joi from "joi";
 import pool from "../db";
+import * as Project from "./Project";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
 import { baseSchema, updatedSchema } from "../validation/schemas/Member";
 
@@ -79,7 +79,12 @@ export const updateMember = async (projectId, userId, accessorId, updateFields) 
       [projectId, userId, accessorId, ...values]
     );
     if (result.rows.length === 0) {
-      throw new Error("Update failed");
+      const project = await Project.getProjectById(projectId);
+      if (project) {
+        throw new Error("Access denied");
+      } else {
+        throw new Error("Project not found");
+      }
     }
     return result.rows[0];
   } finally {
@@ -107,7 +112,12 @@ export const deleteMemberById = async (projectId, memberId, accessorId) => {
       [memberId, projectId, accessorId]
     );
     if (result.rows.length === 0) {
-      throw new Error("Deletion failed");
+      const project = await Project.getProjectById(projectId);
+      if (project) {
+        throw new Error("Access denied");
+      } else {
+        throw new Error("Project not found");
+      }
     }
     return result.rows[0];
   } finally {
@@ -134,7 +144,12 @@ export const deleteMembersByProjectId = async (projectId, accessorId) => {
       [projectId, accessorId]
     );
     if (result.rows.length === 0) {
-      throw new Error("Deletion failed");
+      const project = await Project.getProjectById(projectId);
+      if (project) {
+        throw new Error("Access denied");
+      } else {
+        throw new Error("Project not found");
+      }
     }
     return result.rows;
   } finally {

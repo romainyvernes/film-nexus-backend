@@ -8,5 +8,5 @@ export const baseSchema = Joi.object({
 });
 
 export const  updatedSchema = baseSchema.append({
-  accessorId: Joi.string().required(),
+  accessorId: Joi.string().uuid().required(),
 }).fork(["position", "isAdmin"], (schema) => schema.optional());

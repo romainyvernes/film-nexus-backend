@@ -8,7 +8,7 @@ export const baseSchema = Joi.object({
 });
 
 export const  updatedSchema = baseSchema.append({
-  id: Joi.string().required(),
+  id: Joi.string().uuid().required(),
   currentPassword: Joi.string().required(),
   newPassword: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).optional(),
 }).fork(["username", "firstName", "lastName", "password"], (schema) => schema.optional());

@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import Joi from "joi";
 import pool from "../db";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
@@ -19,6 +18,14 @@ const userPropsStr = userProps.join(", ");
 export const saltRounds = 10;
 
 export const getUserById = async (id, withPassword = false) => {
+  const { error } = updatedSchema
+    .fork(["currentPassword"], (schema) => schema.optional())
+    .validate({ id });
+
+  if (error) {
+    throw new Error(error.details[0].message);
+  }
+
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -29,17 +36,11 @@ export const getUserById = async (id, withPassword = false) => {
       `,
       [id]
     );
-    if (withPassword) {
+    if (withPassword || !result.rows[0]) {
       return result.rows[0];
     }
     const { password, ...sanitizedUser } = result.rows[0];
     return sanitizedUser;
-  } catch(err) {
-    // invalid ID type is akin to not finding the user
-    if (err.message.includes("invalid input syntax for type uuid")) {
-      return undefined;
-    }
-    throw err;
   } finally {
     client.release();
   }
@@ -143,6 +144,15 @@ export const updateUser = async (id, currentPassword, updateFields) => {
 };
 
 export const deleteUser = async (id, currentPassword) => {
+  const { error } = updatedSchema.validate({
+    id,
+    currentPassword,
+  });
+
+  if (error) {
+    throw new Error(error.details[0].message);
+  }
+
   const client = await pool.connect();
   try {
     const user = await getUserById(id, true);

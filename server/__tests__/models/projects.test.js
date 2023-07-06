@@ -1,5 +1,6 @@
 import * as Project from '../../models/Project';
 import pool from "../../db";
+import { v4 as uuidv4 } from 'uuid';
 import { addProjectMember, addUser, clearDb, populateDb } from "../utils/helpers";
 import { projectInfo, newProjectName, memberInfo, newTestUserInfo } from "../utils/testData";
 
@@ -80,7 +81,15 @@ describe('Project Model', () => {
 
     expect(projects).toBeInstanceOf(Array)
     expect(projects).toHaveLength(1);
-    expect(projects[0]).toMatchObject(newProject);
+    expect(projects[0]).toEqual({
+      id: expect.stringMatching(newProject.id),
+      name: expect.stringMatching(projectInfo.name),
+      created_on: newProject.created_on,
+      creator_id: expect.stringMatching(user.id),
+      members: expect.any(Array),
+      is_admin: expect.any(Boolean),
+      position: expect.stringMatching(memberInfo.position)
+    });
   });
 
   it('should NOT update a project without required fields', async () => {
@@ -97,6 +106,14 @@ describe('Project Model', () => {
       user.id,
       { name: "" },
     )).rejects.toThrow();
+  });
+
+  it('should NOT update a project with incorrect project ID', async () => {
+    await expect(Project.updateProject(
+      uuidv4(),
+      user.id,
+      { name: newProjectName },
+    )).rejects.toThrow("Project not found");
   });
 
   it('should NOT update a project if user doesn\'t have admin access', async () => {
@@ -119,7 +136,7 @@ describe('Project Model', () => {
       newProject.id,
       secondUser.id,
       { name: "My project now" },
-    )).rejects.toThrow("Update failed");
+    )).rejects.toThrow("Access denied");
   });
 
   it('should update a project', async () => {
@@ -146,7 +163,7 @@ describe('Project Model', () => {
     await expect(Project.deleteProject(
       newProject.id,
       secondUser.id,
-    )).rejects.toThrow("Deletion failed");
+    )).rejects.toThrow("Access denied");
   });
 
   it('should delete a project', async () => {

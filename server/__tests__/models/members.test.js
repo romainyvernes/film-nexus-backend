@@ -122,7 +122,7 @@ describe('Member Model', () => {
       secondUser.id,
       secondUser.id,
       { position: updatedMemberInfo.position },
-    )).rejects.toThrow("Update failed");
+    )).rejects.toThrow("Access denied");
   });
 
   it('should NOT delete a project member by id if user doesn\'t have admin access', async () => {
@@ -130,14 +130,14 @@ describe('Member Model', () => {
       project.id,
       user.id,
       secondUser.id,
-    )).rejects.toThrow("Deletion failed");
+    )).rejects.toThrow("Access denied");
   });
 
   it('should NOT delete all members of a specific project if user doesn\'t have admin access', async () => {
     await expect(Member.deleteMembersByProjectId(
       project.id,
       secondUser.id
-    )).rejects.toThrow("Deletion failed");
+    )).rejects.toThrow("Access denied");
   });
 
   it('should delete a project member by id', async () => {

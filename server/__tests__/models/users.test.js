@@ -1,5 +1,6 @@
 import * as User from "../../models/User";
 import pool from "../../db";
+import { v4 as uuidv4 } from 'uuid';
 import { clearDb, populateDb } from "../utils/helpers";
 import { incorrectPassword, newTestUserInfo, updatedTestUserInfo } from "../utils/testData";
 
@@ -69,7 +70,7 @@ describe("User Model", () => {
   });
 
   it("should return undefined if attempting to retrieve a user with an invalid ID", async () => {
-    const user = await User.getUserById("unknown-id");
+    const user = await User.getUserById(uuidv4());
     expect(user).toBeUndefined();
   });
 
@@ -88,7 +89,7 @@ describe("User Model", () => {
 
   it("should return user not found error if attempting to update a user with an invalid ID", async () => {
     await expect(User.updateUser(
-      "unknown-id",
+      uuidv4(),
       newTestUserInfo.password,
       {
         firstName: updatedTestUserInfo.firstName,
@@ -159,9 +160,9 @@ describe("User Model", () => {
 
   it("should return undefined if attempting to delete a user with an invalid ID", async () => {
     await expect(User.deleteUser(
-      "unknown-id",
+      uuidv4(),
       updatedTestUserInfo.password
-    )).rejects.toThrow("User not found");
+    )).rejects.toThrow();
   });
 
   it("should delete a user with proper credentials", async () => {

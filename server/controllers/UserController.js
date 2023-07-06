@@ -2,10 +2,21 @@ import * as User from '../models/User';
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
 
 export const getUserById = async (req, res) => {
-  const id = req.params.id;
-  if (!id) {
-    return res.status(400).json({ message: 'User ID is required' });
+  const { error } = updatedSchema
+    .fork(["currentPassword"], (schema) => schema.optional())
+    .validate({ ...req.params });
+
+  if (error) {
+    const { message } = error.details[0];
+    if (message.includes("must be a valid GUID")) {
+      return res.status(404).json({ message: "User not found" });
+    } else {
+      return res.status(400).json({ message });
+    }
   }
+
+  const id = req.params.id;
+
   try {
     const user = await User.getUserById(id);
     if (user) {
@@ -59,7 +70,12 @@ export const updateUser = async (req, res) => {
   );
 
   if (error) {
-    return res.status(400).json({ message: error.details[0].message });
+    const { message } = error.details[0];
+    if (message.includes("must be a valid GUID")) {
+      return res.status(404).json({ message: "User not found" });
+    } else {
+      return res.status(400).json({ message });
+    }
   }
 
   const id = req.params.id;
@@ -111,7 +127,12 @@ export const deleteUser = async (req, res) => {
   );
 
   if (error) {
-    return res.status(400).json({ message: error.details[0].message });
+    const { message } = error.details[0];
+    if (message.includes("must be a valid GUID")) {
+      return res.status(404).json({ message: "User not found" });
+    } else {
+      return res.status(400).json({ message });
+    }
   }
 
   const id = req.params.id;
