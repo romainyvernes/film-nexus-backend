@@ -6,7 +6,7 @@ import { projectInfo, newProjectName, newTestUserInfo, memberInfo } from "../uti
 import { generateAuthToken } from "../../middleware/jwt";
 
 describe('Projects Routes', () => {
-  let token, user, secondUser, nonAdminMember, secondToken;
+  let token, user, secondUser, secondToken;
   beforeAll(async () => {
     await populateDb();
     // create new user in DB
@@ -155,7 +155,7 @@ describe('Projects Routes', () => {
       password: "testuser123",
     });
 
-    nonAdminMember = await addProjectMember({
+    await addProjectMember({
       projectId: newProject.id,
       userId: secondUser.id,
       position: "Crew",

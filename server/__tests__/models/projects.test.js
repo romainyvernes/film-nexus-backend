@@ -5,7 +5,7 @@ import { addProjectMember, addUser, clearDb, populateDb } from "../utils/helpers
 import { projectInfo, newProjectName, memberInfo, newTestUserInfo } from "../utils/testData";
 
 describe('Project Model', () => {
-  let user, secondUser, nonAdminMember;
+  let user, secondUser;
   beforeAll(async () => {
     await populateDb();
     // create new user in DB
@@ -125,7 +125,7 @@ describe('Project Model', () => {
       password: "testuser123",
     });
 
-    nonAdminMember = await addProjectMember({
+    await addProjectMember({
       projectId: newProject.id,
       userId: secondUser.id,
       position: "Crew",

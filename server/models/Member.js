@@ -12,8 +12,8 @@ export const memberProps = [
 ];
 
 export const createMember = async (projectId, userId, fields) => {
-  const { error, value } = baseSchema.validate({
-    projectId: projectId,
+  const { error } = baseSchema.validate({
+    projectId,
     userId: userId,
     ...fields,
   });
