@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { createMember, deleteMember, updateMember } from "../controllers/MemberController";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 /* POST create a new member */
 router.post("/", createMember);

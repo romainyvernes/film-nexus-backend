@@ -1,8 +1,8 @@
 import { Router } from "express";
 import usersRouter from "./users";
+import membersRouter from "./members";
 import projectsRouter from "./projects";
 import { verifyToken } from "../middleware/jwt";
-import membersRouter from "./members";
 
 const router = Router();
 
