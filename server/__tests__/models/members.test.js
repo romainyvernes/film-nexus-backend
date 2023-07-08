@@ -66,6 +66,20 @@ describe('Member Model', () => {
     });
   });
 
+  it('should retrieve a project member', async () => {
+    const member = await Member.getMember(
+      project.id,
+      user.id,
+    );
+
+    expect(member).toEqual({
+      project_id: expect.stringMatching(project.id),
+      user_id: expect.stringMatching(user.id),
+      is_admin: true,
+      position: expect.stringMatching(memberInfo.position),
+    });
+  });
+
   it('should NOT update a project member if required fields are missing', async () => {
     await expect(Member.updateMember(
       project.id,

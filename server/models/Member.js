@@ -11,10 +11,38 @@ export const memberProps = [
   "is_admin",
 ];
 
+export const getMember = async (projectId, userId) => {
+  const { error } = baseSchema
+    .fork(["position", "isAdmin"], (schema) => schema.optional())
+    .validate({
+      projectId,
+      userId,
+    });
+
+  if (error) {
+    throw new Error(error.details[0].message);
+  }
+
+  const client = await pool.connect();
+  try {
+    const result = await client.query(
+      `
+        SELECT *
+        FROM project_members
+        WHERE project_id = $1 AND user_id = $2
+      `,
+      [projectId, userId]
+    );
+    return result.rows[0];
+  } finally {
+    client.release();
+  }
+};
+
 export const createMember = async (projectId, userId, fields) => {
   const { error } = baseSchema.validate({
     projectId,
-    userId: userId,
+    userId,
     ...fields,
   });
 
@@ -56,8 +84,15 @@ export const updateMember = async (projectId, userId, accessorId, updateFields) 
     throw new Error(error.details[0].message);
   }
 
-  const filteredFields = getFilteredFields(updateFields, allowedFields);
+  const filteredFields = getFilteredFields(
+    formatKeysToSnakeCase(updateFields),
+    allowedFields
+  );
   const { values, params } = getQueryData(filteredFields, true, 4);
+
+  if (values.length === 0) {
+    throw new Error("At least one update is required");
+  }
 
   const client = await pool.connect();
   try {
