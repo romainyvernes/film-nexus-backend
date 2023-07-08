@@ -2,7 +2,7 @@ import * as User from '../models/User';
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
 
 export const getUserById = async (req, res) => {
-  const { error } = updatedSchema
+  const { error, value } = updatedSchema
     .fork(["currentPassword"], (schema) => schema.optional())
     .validate({ ...req.params });
 
@@ -15,7 +15,7 @@ export const getUserById = async (req, res) => {
     }
   }
 
-  const id = req.params.id;
+  const { id } = value;
 
   try {
     const user = await User.getUserById(id);
@@ -30,7 +30,7 @@ export const getUserById = async (req, res) => {
 };
 
 export const createUser = async (req, res) => {
-  const { error } = baseSchema.validate(req.body, { allowUnknown: true });
+  const { error, value } = baseSchema.validate(req.body, { allowUnknown: true });
 
   if (error) {
     return res.status(400).json({ message: error.details[0].message });
@@ -41,7 +41,7 @@ export const createUser = async (req, res) => {
     firstName,
     lastName,
     password,
-  } = req.body;
+  } = value;
   try {
     const user = await User.getUserByUsername(username);
 
@@ -64,7 +64,7 @@ export const createUser = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
-  const { error } = updatedSchema.validate(
+  const { error, value } = updatedSchema.min(3).validate(
     { ...req.body, ...req.params },
     { allowUnknown: true }
   );
@@ -78,14 +78,14 @@ export const updateUser = async (req, res) => {
     }
   }
 
-  const id = req.params.id;
   const {
+    id,
     username,
     firstName,
     lastName,
     currentPassword,
     newPassword,
-  } = req.body;
+  } = value;
   try {
     if (username) {
       const user = await User.getUserByUsername(username);
@@ -121,7 +121,7 @@ export const updateUser = async (req, res) => {
 };
 
 export const deleteUser = async (req, res) => {
-  const { error } = updatedSchema.validate(
+  const { error, value } = updatedSchema.validate(
     { ...req.body, ...req.params },
     { allowUnknown: true }
   );
@@ -135,8 +135,7 @@ export const deleteUser = async (req, res) => {
     }
   }
 
-  const id = req.params.id;
-  const { currentPassword } = req.body;
+  const { id, currentPassword } = value;
   try {
     const deletedUser = await User.deleteUser(id, currentPassword);
     if (deletedUser) {

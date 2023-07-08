@@ -48,7 +48,7 @@ export const getProjects = async (accessorId) => {
 };
 
 export const getProjectById = async (projectId, accessorId) => {
-  const { error } = updatedSchema.validate({
+  const { error, value } = updatedSchema.validate({
     id: projectId,
   });
 
@@ -86,7 +86,7 @@ export const getProjectById = async (projectId, accessorId) => {
             AND pm.user_id = $1
         WHERE projects.id = $2
       `,
-      [accessorId, projectId]
+      [accessorId, value.id]
     );
     return result.rows[0];
   } finally {
@@ -95,11 +95,11 @@ export const getProjectById = async (projectId, accessorId) => {
 };
 
 export const createProject = async (creatorId, projectFields, memberFields) => {
-  const { error: projectError } = projectBaseSchema.validate({
+  const { error: projectError, value: projectValue } = projectBaseSchema.validate({
     creatorId,
     ...projectFields
   });
-  const { error: memberError } = memberBaseSchema
+  const { error: memberError, value: memberValue } = memberBaseSchema
     .fork(["isAdmin", "projectId"], (schema) => schema.optional())
     .validate({
       userId: creatorId,
@@ -115,7 +115,7 @@ export const createProject = async (creatorId, projectFields, memberFields) => {
   }
 
   const filteredFields = getFilteredFields(
-    formatKeysToSnakeCase(projectFields),
+    formatKeysToSnakeCase(projectValue),
     allowedFields
   );
   const { values, placeholders } = getQueryData(filteredFields, false, 2);
@@ -128,16 +128,17 @@ export const createProject = async (creatorId, projectFields, memberFields) => {
         VALUES (${["$1", placeholders.values].join(", ")})
         RETURNING *
       `,
-      [creatorId, ...values]
+      [projectValue.creatorId, ...values]
     );
 
     // Add project creator as a member of that project
     const projectId = result.rows[0].id;
+    const { userId, ...rest } = memberValue;
     await Member.createMember(
       projectId,
-      creatorId,
+      userId,
       {
-        ...memberFields,
+        ...rest,
         isAdmin: true
       }
     );
@@ -148,7 +149,7 @@ export const createProject = async (creatorId, projectFields, memberFields) => {
 };
 
 export const updateProject = async (projectId, accessorId, updateFields) => {
-  const { error } = updatedSchema.validate({
+  const { error, value } = updatedSchema.min(2).validate({
     id: projectId,
     ...updateFields
   });
@@ -163,7 +164,7 @@ export const updateProject = async (projectId, accessorId, updateFields) => {
   }
 
   const filteredFields = getFilteredFields(
-    formatKeysToSnakeCase(updateFields),
+    formatKeysToSnakeCase(value),
     allowedFields
   );
   const { values, params } = getQueryData(filteredFields, true, 3);
@@ -184,9 +185,9 @@ export const updateProject = async (projectId, accessorId, updateFields) => {
           )
         RETURNING *
       `,
-      [projectId, accessorId, ...values]
+      [value.id, accessorId, ...values]
     );
-    const updatedProject = await getProjectById(projectId, accessorId);
+    const updatedProject = await getProjectById(value.id, accessorId);
     if (result.rows.length === 0) {
       if (updatedProject) {
         throw new Error("Access denied");
@@ -201,7 +202,7 @@ export const updateProject = async (projectId, accessorId, updateFields) => {
 };
 
 export const deleteProject = async (projectId, accessorId) => {
-  const { error } = updatedSchema.validate({
+  const { error, value } = updatedSchema.validate({
     id: projectId,
   });
 
@@ -230,9 +231,9 @@ export const deleteProject = async (projectId, accessorId) => {
             )
           RETURNING *
         `,
-        [projectId, accessorId]
+        [value.id, accessorId]
       ),
-      Member.deleteMembersByProjectId(projectId, accessorId),
+      Member.deleteMembersByProjectId(value.id, accessorId),
     ]);
     return {
       ...projectRows[0],

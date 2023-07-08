@@ -12,8 +12,8 @@ export const memberProps = [
 ];
 
 export const getMember = async (projectId, userId) => {
-  const { error } = baseSchema
-    .fork(["position", "isAdmin"], (schema) => schema.optional())
+  const { error, value } = updatedSchema
+    .fork(["accessorId"], (schema) => schema.optional())
     .validate({
       projectId,
       userId,
@@ -31,7 +31,7 @@ export const getMember = async (projectId, userId) => {
         FROM project_members
         WHERE project_id = $1 AND user_id = $2
       `,
-      [projectId, userId]
+      [value.projectId, value.userId]
     );
     return result.rows[0];
   } finally {
@@ -40,7 +40,7 @@ export const getMember = async (projectId, userId) => {
 };
 
 export const createMember = async (projectId, userId, fields) => {
-  const { error } = baseSchema.validate({
+  const { error, value } = baseSchema.validate({
     projectId,
     userId,
     ...fields,
@@ -51,7 +51,7 @@ export const createMember = async (projectId, userId, fields) => {
   }
 
   const filteredFields = getFilteredFields(
-    formatKeysToSnakeCase(fields),
+    formatKeysToSnakeCase(value),
     allowedFields
   );
   const { values, placeholders } = getQueryData(filteredFields, false, 3);
@@ -64,7 +64,7 @@ export const createMember = async (projectId, userId, fields) => {
         VALUES (${["$1", "$2", placeholders.values].join(", ")})
         RETURNING *
       `,
-      [projectId, userId, ...values]
+      [value.projectId, value.userId, ...values]
     );
     return result.rows[0];
   } finally {
@@ -73,7 +73,7 @@ export const createMember = async (projectId, userId, fields) => {
 };
 
 export const updateMember = async (projectId, userId, accessorId, updateFields) => {
-  const { error } = updatedSchema.validate({
+  const { error, value } = updatedSchema.min(4).validate({
     projectId,
     userId,
     accessorId,
@@ -85,7 +85,7 @@ export const updateMember = async (projectId, userId, accessorId, updateFields) 
   }
 
   const filteredFields = getFilteredFields(
-    formatKeysToSnakeCase(updateFields),
+    formatKeysToSnakeCase(value),
     allowedFields
   );
   const { values, params } = getQueryData(filteredFields, true, 4);
@@ -111,10 +111,10 @@ export const updateMember = async (projectId, userId, accessorId, updateFields) 
           )
         RETURNING *
       `,
-      [projectId, userId, accessorId, ...values]
+      [value.projectId, value.userId, value.accessorId, ...values]
     );
     if (result.rows.length === 0) {
-      const project = await Project.getProjectById(projectId);
+      const project = await Project.getProjectById(value.projectId);
       if (project) {
         throw new Error("Access denied");
       } else {
@@ -128,6 +128,16 @@ export const updateMember = async (projectId, userId, accessorId, updateFields) 
 };
 
 export const deleteMemberById = async (projectId, memberId, accessorId) => {
+  const { error, value } = updatedSchema.validate({
+    projectId,
+    userId: memberId,
+    accessorId
+  });
+
+  if (error) {
+    throw new Error(error.details[0].message);
+  }
+
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -144,10 +154,10 @@ export const deleteMemberById = async (projectId, memberId, accessorId) => {
           )
         RETURNING *
       `,
-      [memberId, projectId, accessorId]
+      [value.userId, value.projectId, value.accessorId]
     );
     if (result.rows.length === 0) {
-      const project = await Project.getProjectById(projectId);
+      const project = await Project.getProjectById(value.projectId);
       if (project) {
         throw new Error("Access denied");
       } else {
@@ -161,6 +171,17 @@ export const deleteMemberById = async (projectId, memberId, accessorId) => {
 };
 
 export const deleteMembersByProjectId = async (projectId, accessorId) => {
+  const { error, value } = updatedSchema
+    .fork(["userId"], (schema) => schema.optional())
+    .validate({
+      projectId,
+      accessorId
+    });
+
+  if (error) {
+    throw new Error(error.details[0].message);
+  }
+
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -176,10 +197,10 @@ export const deleteMembersByProjectId = async (projectId, accessorId) => {
           )
         RETURNING *
       `,
-      [projectId, accessorId]
+      [value.projectId, value.accessorId]
     );
     if (result.rows.length === 0) {
-      const project = await Project.getProjectById(projectId);
+      const project = await Project.getProjectById(value.projectId);
       if (project) {
         throw new Error("Access denied");
       } else {

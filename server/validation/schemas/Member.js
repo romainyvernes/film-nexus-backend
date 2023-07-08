@@ -7,6 +7,8 @@ export const baseSchema = Joi.object({
   isAdmin: Joi.boolean().required(),
 });
 
-export const  updatedSchema = baseSchema.append({
-  accessorId: Joi.string().uuid().required(),
-}).fork(["position", "isAdmin"], (schema) => schema.optional());
+export const  updatedSchema = baseSchema
+  .append({
+    accessorId: Joi.string().uuid().required(),
+  })
+  .fork(["position", "isAdmin"], (schema) => schema.optional());

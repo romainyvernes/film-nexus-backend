@@ -13,7 +13,7 @@ export const getAllProjects = async (req, res) => {
 };
 
 export const getProjectById = async (req, res) => {
-  const { error } = updatedSchema.validate({
+  const { error, value } = updatedSchema.validate({
     ...req.params
   });
 
@@ -25,7 +25,7 @@ export const getProjectById = async (req, res) => {
       return res.status(400).json({ message });
     }
   }
-  const projectId = req.params.id;
+  const { id: projectId } = value;
   const userId = req.userId;
 
   try {
@@ -41,11 +41,11 @@ export const getProjectById = async (req, res) => {
 };
 
 export const createProject = async (req, res) => {
-  const { error: projectError } = projectBaseSchema
+  const { error: projectError, value: projectValue } = projectBaseSchema
     .fork(["creatorId"], (schema) => schema.optional())
     .validate({ ...req.body }, { allowUnknown: true });
 
-  const { error: memberError } = memberBaseSchema
+  const { error: memberError, value: memberValue } = memberBaseSchema
     .fork(["projectId", "userId", "isAdmin"], (schema) => schema.optional())
     .validate({ ...req.body }, { allowUnknown: true });
 
@@ -57,7 +57,10 @@ export const createProject = async (req, res) => {
     return res.status(400).json({ message: memberError.details[0].message });
   }
 
-  const { name, position } = req.body;
+  const {
+    name,
+    position
+  } = { ...projectValue, ...memberValue };
   const userId = req.userId;
 
   try {
@@ -73,7 +76,7 @@ export const createProject = async (req, res) => {
 };
 
 export const updateProject = async (req, res) => {
-  const { error } = updatedSchema
+  const { error, value } = updatedSchema
     .fork(["name"], (schema) => schema.required())
     .validate(
       { ...req.body, ...req.params },
@@ -89,9 +92,11 @@ export const updateProject = async (req, res) => {
     }
   }
 
-  const projectId = req.params.id;
+  const {
+    id: projectId,
+    name
+  } = value;
   const userId = req.userId;
-  const { name } = req.body;
   try {
     const updatedProject = await Project.updateProject(
       projectId,
@@ -116,7 +121,7 @@ export const updateProject = async (req, res) => {
 };
 
 export const deleteProject = async (req, res) => {
-  const { error } = updatedSchema.validate(
+  const { error, value } = updatedSchema.validate(
     { ...req.params },
     { allowUnknown: true }
   );
@@ -129,7 +134,7 @@ export const deleteProject = async (req, res) => {
     }
   }
 
-  const projectId = req.params.id;
+  const { id: projectId } = value;
   const userId = req.userId;
   try {
     await Project.deleteProject(projectId, userId);

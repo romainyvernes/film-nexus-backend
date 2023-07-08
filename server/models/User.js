@@ -4,7 +4,7 @@ import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
 
 // Add additional modifiable fields as needed
-const allowedFields = ["username", "first_name", "last_name"];
+const allowedFields = ["username", "first_name", "last_name", "password"];
 
 // User object's desired properties
 export const userProps = [
@@ -18,7 +18,7 @@ const userPropsStr = userProps.join(", ");
 export const saltRounds = 10;
 
 export const getUserById = async (id, withPassword = false) => {
-  const { error } = updatedSchema
+  const { error, value } = updatedSchema
     .fork(["currentPassword"], (schema) => schema.optional())
     .validate({ id });
 
@@ -34,7 +34,7 @@ export const getUserById = async (id, withPassword = false) => {
         FROM users
         WHERE id = $1
       `,
-      [id]
+      [value.id]
     );
     if (withPassword || !result.rows[0]) {
       return result.rows[0];
@@ -68,7 +68,7 @@ export const createUser = async (
   password,
   fields,
 ) => {
-  const { error } = baseSchema.validate({ username, password, ...fields });
+  const { error, value } = baseSchema.validate({ username, password, ...fields });
 
   if (error) {
     throw new Error(error.details[0].message);
@@ -76,10 +76,10 @@ export const createUser = async (
 
   const client = await pool.connect();
   try {
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const excludedFields = ["username"];
+    const hashedPassword = await bcrypt.hash(value.password, saltRounds);
+    const excludedFields = ["username", "password"];
     const filteredFields = getFilteredFields(
-      formatKeysToSnakeCase(fields),
+      formatKeysToSnakeCase(value),
       allowedFields,
       excludedFields
     );
@@ -90,7 +90,7 @@ export const createUser = async (
         VALUES (${["$1", "$2", placeholders.values].join(", ")})
         RETURNING ${userPropsStr}
       `,
-      [username, hashedPassword, ...values]
+      [value.username, hashedPassword, ...values]
     );
     return result.rows[0];
   } finally {
@@ -99,7 +99,7 @@ export const createUser = async (
 };
 
 export const updateUser = async (id, currentPassword, updateFields) => {
-  const { error } = updatedSchema.validate({
+  const { error, value } = updatedSchema.min(3).validate({
     id,
     currentPassword,
     ...updateFields
@@ -111,18 +111,21 @@ export const updateUser = async (id, currentPassword, updateFields) => {
 
   const client = await pool.connect();
   try {
-    const user = await getUserById(id, true);
+    const user = await getUserById(value.id, true);
     if (!user) {
       throw new Error("User not found");
     }
-    const isAuthenticated = await bcrypt.compare(currentPassword, user.password);
+    const isAuthenticated = await bcrypt.compare(value.currentPassword, user.password);
 
     if (isAuthenticated) {
-      let fieldsToUpdate = {...updateFields};
+      let fieldsToUpdate = { ...value };
       if (fieldsToUpdate.password) {
         fieldsToUpdate.password = await bcrypt.hash(fieldsToUpdate.password, saltRounds);
       }
-      fieldsToUpdate = formatKeysToSnakeCase(fieldsToUpdate);
+      fieldsToUpdate = getFilteredFields(
+        formatKeysToSnakeCase(fieldsToUpdate),
+        allowedFields
+      );
       const { values, params } = getQueryData(fieldsToUpdate, true, 2);
 
       const result = await client.query(
@@ -132,7 +135,7 @@ export const updateUser = async (id, currentPassword, updateFields) => {
           WHERE id = $1
           RETURNING ${userPropsStr}
         `,
-        [id, ...values]
+        [value.id, ...values]
       );
       return result.rows[0];
     } else {
@@ -144,7 +147,7 @@ export const updateUser = async (id, currentPassword, updateFields) => {
 };
 
 export const deleteUser = async (id, currentPassword) => {
-  const { error } = updatedSchema.validate({
+  const { error, value } = updatedSchema.validate({
     id,
     currentPassword,
   });
@@ -155,15 +158,15 @@ export const deleteUser = async (id, currentPassword) => {
 
   const client = await pool.connect();
   try {
-    const user = await getUserById(id, true);
+    const user = await getUserById(value.id, true);
     if (!user) {
       throw new Error("User not found");
     }
-    const isAuthenticated = await bcrypt.compare(currentPassword, user.password);
+    const isAuthenticated = await bcrypt.compare(value.currentPassword, user.password);
     if (isAuthenticated) {
       const [{ rows: userRows }, ] = await Promise.all([
-        client.query(`DELETE FROM users WHERE id = $1 RETURNING ${userPropsStr}`, [id]),
-        client.query("DELETE FROM project_members WHERE user_id = $1", [id])
+        client.query(`DELETE FROM users WHERE id = $1 RETURNING ${userPropsStr}`, [value.id]),
+        client.query("DELETE FROM project_members WHERE user_id = $1", [value.id])
       ]);
       return userRows[0];
     } else {
