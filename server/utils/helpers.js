@@ -11,7 +11,14 @@ export const getFilteredFields = (updateFields, allowedFields, excludedFields = 
 
 export const getQueryData = (fields, isUpdate = false, indexOffset = 1) => {
   const columns = Object.keys(fields);
-  const values = Object.values(fields);
+  const values = Object.values(fields).filter((value, index) => {
+    if (value === undefined) {
+      // remove corresponding columns with undefined values
+      columns.splice(index, 1);
+      return false;
+    }
+    return true;
+  });
   const data = {};
   if (isUpdate) {
     data.params = columns
