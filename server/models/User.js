@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import pool from "../db";
+import _ from "lodash";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
 
@@ -16,6 +17,41 @@ export const userProps = [
 ];
 const userPropsStr = userProps.join(", ");
 export const saltRounds = 10;
+
+// search for users, excluding current user and users already in project
+export const getUsers = async (projectId, accessorId, searchParams = {}) => {
+  const client = await pool.connect();
+  try {
+    let query = `
+      SELECT ${userPropsStr}
+      FROM users
+      WHERE id <> '${accessorId}'
+      AND id NOT IN (
+        SELECT user_id
+        FROM project_members
+        WHERE project_id = '${projectId}'
+      )
+    `;
+    if (!_.isEmpty(searchParams)) {
+      const keys = Object
+        .keys(searchParams)
+        .filter((key) => searchParams[key] !== undefined);
+      if (keys.length > 0) {
+        const searchStr = keys
+        .map((param) => (
+          `${_.snakeCase(param).toLowerCase()} ILIKE '%${searchParams[param]}%'`
+        ))
+        .join(" OR ");
+        query += ` AND (${searchStr})`;
+      }
+    }
+    query += " ORDER BY last_name";
+    const result = await client.query(query);
+    return result.rows;
+  } finally {
+    client.release();
+  }
+};
 
 export const getUserById = async (id, withPassword = false) => {
   const { error, value } = updatedSchema

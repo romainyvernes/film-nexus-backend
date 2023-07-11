@@ -1,5 +1,39 @@
 import * as User from '../models/User';
+import Joi from "joi";
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
+
+export const getUsers = async (req, res) => {
+  const { error, value } = baseSchema
+    .append({
+      projectId: Joi.string().uuid().required()
+    })
+    .fork(["username", "firstName", "lastName", "password"], (schema) => schema.optional())
+    .min(1)
+    .validate({ ...req.body, ...req.query }, { allowUnknown: true });
+
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
+  const userId = req.userId;
+  const {
+    username,
+    firstName,
+    lastName,
+    projectId,
+  } = value;
+
+  try {
+    const users = await User.getUsers(
+      projectId,
+      userId,
+      { username, firstName, lastName }
+    );
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Error retrieving user' });
+  }
+};
 
 export const getUserById = async (req, res) => {
   const { error, value } = updatedSchema

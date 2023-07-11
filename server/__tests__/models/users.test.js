@@ -1,8 +1,8 @@
 import * as User from "../../models/User";
 import pool from "../../db";
 import { v4 as uuidv4 } from 'uuid';
-import { clearDb, populateDb } from "../utils/helpers";
-import { incorrectPassword, newTestUserInfo, updatedTestUserInfo } from "../utils/testData";
+import { addProject, addUser, clearDb, populateDb } from "../utils/helpers";
+import { incorrectPassword, newTestUserInfo, projectInfo, updatedTestUserInfo } from "../utils/testData";
 
 describe("User Model", () => {
   beforeAll(async () => {
@@ -14,7 +14,7 @@ describe("User Model", () => {
     await pool.end();
   });
 
-  let newTestUser;
+  let newTestUser, secondUser, thirdUser, project;
 
   it("should NOT create a new user without required fields", async () => {
     await expect(User.createUser(
@@ -52,6 +52,46 @@ describe("User Model", () => {
       username: expect.stringMatching(newTestUserInfo.username),
       first_name: expect.stringMatching(newTestUserInfo.firstName),
       last_name: expect.stringMatching(newTestUserInfo.lastName),
+      created_on: expect.any(Date),
+    });
+  });
+
+  it("should find a list of users eligible to be added to a new project as members w/o search criteria", async () => {
+    // create 2 new users and project in DB
+    [secondUser, thirdUser, project] = await Promise.all([
+      addUser({ ...updatedTestUserInfo }),
+      addUser({
+        username: "jackie_O",
+        firstName: "Jackie",
+        lastName: "O",
+        password: "testy123"
+      }),
+      addProject({ ...projectInfo, creatorId: newTestUser.id })
+    ]);
+    const users = await User.getUsers(project.id, newTestUser.id);
+
+    expect(users).toBeInstanceOf(Array);
+    expect(users.length).toBe(2);
+    expect(users[0]).toEqual({
+      id: expect.any(String),
+      username: expect.stringMatching(secondUser.username),
+      first_name: expect.stringMatching(secondUser.first_name),
+      last_name: expect.stringMatching(secondUser.last_name),
+      created_on: expect.any(Date),
+    });
+  });
+
+  it("should find a list of users eligible to be added to a new project as members w/ search criteria", async () => {
+    const searchParams = { firstName: "jo" };
+    const users = await User.getUsers(project.id, newTestUser.id, searchParams);
+
+    expect(users).toBeInstanceOf(Array);
+    expect(users.length).toBe(1);
+    expect(users[0]).toEqual({
+      id: expect.any(String),
+      username: expect.stringMatching(secondUser.username),
+      first_name: expect.stringMatching(secondUser.first_name),
+      last_name: expect.stringMatching(secondUser.last_name),
       created_on: expect.any(Date),
     });
   });

@@ -1,12 +1,12 @@
 import request from 'supertest';
 import app from '../../app';
 import pool from "../../db";
-import { addUser, clearDb, populateDb } from "../utils/helpers";
-import { incorrectPassword, newTestUserInfo, updatedTestUserInfo } from "../utils/testData";
+import { addProject, addUser, clearDb, populateDb } from "../utils/helpers";
+import { incorrectPassword, newTestUserInfo, projectInfo, updatedTestUserInfo } from "../utils/testData";
 import { generateAuthToken } from "../../middleware/jwt";
 
 describe('Users Routes', () => {
-  let user, token;
+  let user, token, secondUser, project;
   beforeAll(async () => {
     await populateDb();
     // create new user in DB
@@ -61,6 +61,67 @@ describe('Users Routes', () => {
   //     message: expect.stringMatching("User already exists")
   //   });
   // });
+
+  it('GET Search for users to add to a project w/o search criteria', async () => {
+    // create a new user and project in DB
+    [secondUser, project] = await Promise.all([
+      addUser({ ...updatedTestUserInfo, username: "johnny_john" }),
+      addProject({ ...projectInfo, creatorId: user.id })
+    ]);
+
+    const response = await request(app)
+      .get(`/api/users`)
+      .send({ projectId: project.id })
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.status).toBe(200);
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBe(1);
+    expect(response.body[0]).toMatchObject({
+      ...secondUser,
+      created_on: expect.any(String),
+    });
+  });
+
+  it('GET Search for users to add to a project w/ search criteria', async () => {
+    // add another user to DB
+    await addUser({
+      username: "jackie_O",
+      firstName: "Jackie",
+      lastName: "O",
+      password: "testy123"
+    });
+
+    const response = await request(app)
+      .get(`/api/users?firstName=jo`)
+      .send({ projectId: project.id })
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.status).toBe(200);
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBe(1);
+    expect(response.body[0]).toMatchObject({
+      ...secondUser,
+      created_on: expect.any(String),
+    });
+  });
+
+  it('GET Search for users w/o required fields', async () => {
+    const response = await request(app)
+      .get(`/api/users`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      message: expect.any(String)
+    });
+  });
 
   it('GET Retrieve a specific user', async () => {
     const response = await request(app)
