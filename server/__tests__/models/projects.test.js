@@ -1,13 +1,11 @@
 import * as Project from '../../models/Project';
-import pool from "../../db";
 import { v4 as uuidv4 } from 'uuid';
-import { addProjectMember, addUser, clearDb, populateDb } from "../utils/helpers";
+import { addProjectMember, addUser } from "../utils/helpers";
 import { projectInfo, newProjectName, memberInfo, newTestUserInfo } from "../utils/testData";
 
 describe('Project Model', () => {
   let user, secondUser;
   beforeAll(async () => {
-    await populateDb();
     // create new user in DB
     user = await addUser({
       username: newTestUserInfo.username,
@@ -15,11 +13,6 @@ describe('Project Model', () => {
       lastName: newTestUserInfo.lastName,
       password: newTestUserInfo.password,
     });
-  });
-
-  afterAll(async () => {
-    await clearDb();
-    await pool.end();
   });
 
   let newProject;

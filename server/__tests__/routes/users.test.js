@@ -1,6 +1,5 @@
 import request from 'supertest';
 import app from '../../app';
-import pool from "../../db";
 import { addProject, addUser, clearDb, populateDb } from "../utils/helpers";
 import { incorrectPassword, newTestUserInfo, projectInfo, updatedTestUserInfo } from "../utils/testData";
 import { generateAuthToken } from "../../middleware/jwt";
@@ -8,7 +7,9 @@ import { generateAuthToken } from "../../middleware/jwt";
 describe('Users Routes', () => {
   let user, token, secondUser, project;
   beforeAll(async () => {
+    await clearDb();
     await populateDb();
+
     // create new user in DB
     user = await addUser({
       username: newTestUserInfo.username,
@@ -17,11 +18,6 @@ describe('Users Routes', () => {
       password: newTestUserInfo.password,
     });
     token = generateAuthToken(user.id);
-  });
-
-  afterAll(async () => {
-    await clearDb();
-    await pool.end();
   });
 
   // tests to move to auth routes when ready
@@ -77,9 +73,12 @@ describe('Users Routes', () => {
 
     expect(response.headers["content-type"]).toMatch(/json/);
     expect(response.status).toBe(200);
-    expect(response.body).toBeInstanceOf(Array);
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toMatchObject({
+    expect(response.body).toMatchObject({
+      page: expect.any(Number),
+      users: expect.any(Array),
+      totalCount: expect.any(Number)
+    });
+    expect(response.body.users[0]).toMatchObject({
       ...secondUser,
       created_on: expect.any(String),
     });
@@ -102,9 +101,12 @@ describe('Users Routes', () => {
 
     expect(response.headers["content-type"]).toMatch(/json/);
     expect(response.status).toBe(200);
-    expect(response.body).toBeInstanceOf(Array);
-    expect(response.body.length).toBe(1);
-    expect(response.body[0]).toMatchObject({
+    expect(response.body).toMatchObject({
+      page: expect.any(Number),
+      users: expect.any(Array),
+      totalCount: expect.any(Number)
+    });
+    expect(response.body.users[0]).toMatchObject({
       ...secondUser,
       created_on: expect.any(String),
     });

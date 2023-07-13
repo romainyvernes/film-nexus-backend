@@ -1,14 +1,12 @@
 import request from 'supertest';
 import app from '../../app';
-import pool from "../../db";
-import { addUser, clearDb, populateDb, addProjectMember, addProject } from "../utils/helpers";
+import { addUser, addProjectMember, addProject } from "../utils/helpers";
 import { projectInfo, newTestUserInfo, memberInfo, updatedTestUserInfo, updatedMemberInfo } from "../utils/testData";
 import { generateAuthToken } from "../../middleware/jwt";
 
 describe('Members Routes', () => {
   let token, user, secondUser, secondToken, project;
   beforeAll(async () => {
-    await populateDb();
     // create 2 new users in DB
     [user, secondUser] = await Promise.all([
       addUser({
@@ -37,11 +35,6 @@ describe('Members Routes', () => {
       position: "Director",
       isAdmin: true,
     });
-  });
-
-  afterAll(async () => {
-    await clearDb();
-    await pool.end();
   });
 
   it('POST Prevent adding a member without admin access to the project', async () => {

@@ -1,14 +1,12 @@
 import request from 'supertest';
 import app from '../../app';
-import pool from "../../db";
-import { addUser, clearDb, populateDb, addProjectMember } from "../utils/helpers";
+import { addUser, addProjectMember } from "../utils/helpers";
 import { projectInfo, newProjectName, newTestUserInfo, memberInfo } from "../utils/testData";
 import { generateAuthToken } from "../../middleware/jwt";
 
 describe('Projects Routes', () => {
   let token, user, secondUser, secondToken;
   beforeAll(async () => {
-    await populateDb();
     // create new user in DB
     user = await addUser({
       username: newTestUserInfo.username,
@@ -17,11 +15,6 @@ describe('Projects Routes', () => {
       password: newTestUserInfo.password,
     });
     token = generateAuthToken(user.id);
-  });
-
-  afterAll(async () => {
-    await clearDb();
-    await pool.end();
   });
 
   let newProject;

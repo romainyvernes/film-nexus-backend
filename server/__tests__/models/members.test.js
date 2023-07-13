@@ -1,13 +1,11 @@
 import * as Member from "../../models/Member";
-import pool from "../../db";
-import { addProject, addUser, clearDb, populateDb } from "../utils/helpers";
+import { addProject, addUser } from "../utils/helpers";
 import { memberInfo, newTestUserInfo, projectInfo, updatedMemberInfo } from "../utils/testData";
 
 describe('Member Model', () => {
   let user, secondUser, project, adminMember, nonAdminMember;
 
   beforeAll(async () => {
-    await populateDb();
     // create new user in DB
     user = await addUser({
       username: newTestUserInfo.username,
@@ -20,11 +18,6 @@ describe('Member Model', () => {
       name: projectInfo.name,
       creatorId: user.id,
     });
-  });
-
-  afterAll(async () => {
-    await clearDb();
-    await pool.end();
   });
 
   it('should NOT create a project member if required fields are missing', async () => {

@@ -1,17 +1,12 @@
 import * as User from "../../models/User";
-import pool from "../../db";
 import { v4 as uuidv4 } from 'uuid';
 import { addProject, addUser, clearDb, populateDb } from "../utils/helpers";
 import { incorrectPassword, newTestUserInfo, projectInfo, updatedTestUserInfo } from "../utils/testData";
 
 describe("User Model", () => {
   beforeAll(async () => {
-    await populateDb();
-  });
-
-  afterAll(async () => {
     await clearDb();
-    await pool.end();
+    await populateDb();
   });
 
   let newTestUser, secondUser, thirdUser, project;
@@ -68,11 +63,14 @@ describe("User Model", () => {
       }),
       addProject({ ...projectInfo, creatorId: newTestUser.id })
     ]);
-    const users = await User.getUsers(project.id, newTestUser.id);
+    const usersObj = await User.getUsers(project.id, newTestUser.id);
 
-    expect(users).toBeInstanceOf(Array);
-    expect(users.length).toBe(2);
-    expect(users[0]).toEqual({
+    expect(usersObj).toMatchObject({
+      page: expect.any(Number),
+      users: expect.any(Array),
+      totalCount: expect.any(Number)
+    });
+    expect(usersObj.users[0]).toEqual({
       id: expect.any(String),
       username: expect.stringMatching(secondUser.username),
       first_name: expect.stringMatching(secondUser.first_name),
@@ -83,11 +81,14 @@ describe("User Model", () => {
 
   it("should find a list of users eligible to be added to a new project as members w/ search criteria", async () => {
     const searchParams = { firstName: "jo" };
-    const users = await User.getUsers(project.id, newTestUser.id, searchParams);
+    const usersObj = await User.getUsers(project.id, newTestUser.id, searchParams);
 
-    expect(users).toBeInstanceOf(Array);
-    expect(users.length).toBe(1);
-    expect(users[0]).toEqual({
+    expect(usersObj).toMatchObject({
+      page: expect.any(Number),
+      users: expect.any(Array),
+      totalCount: expect.any(Number)
+    });
+    expect(usersObj.users[0]).toEqual({
       id: expect.any(String),
       username: expect.stringMatching(secondUser.username),
       first_name: expect.stringMatching(secondUser.first_name),
