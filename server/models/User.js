@@ -4,6 +4,8 @@ import _ from "lodash";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
 
+const USERS_LIMIT = 10;
+
 // Add additional modifiable fields as needed
 const allowedFields = ["username", "first_name", "last_name", "password"];
 
@@ -19,10 +21,10 @@ const userPropsStr = userProps.join(", ");
 export const saltRounds = 10;
 
 // search for users, excluding current user and users already in project
-export const getUsers = async (projectId, accessorId, searchParams = {}) => {
+export const getUsers = async (projectId, accessorId, searchParams = {}, pageNumber = 1) => {
   const client = await pool.connect();
   try {
-    let query = `
+    let usersQuery = `
       SELECT ${userPropsStr}
       FROM users
       WHERE id <> '${accessorId}'
@@ -32,6 +34,8 @@ export const getUsers = async (projectId, accessorId, searchParams = {}) => {
         WHERE project_id = '${projectId}'
       )
     `;
+    const countQuery = usersQuery;
+
     if (!_.isEmpty(searchParams)) {
       const keys = Object
         .keys(searchParams)
@@ -42,12 +46,22 @@ export const getUsers = async (projectId, accessorId, searchParams = {}) => {
           `${_.snakeCase(param).toLowerCase()} ILIKE '%${searchParams[param]}%'`
         ))
         .join(" OR ");
-        query += ` AND (${searchStr})`;
+        usersQuery += ` AND (${searchStr})`;
       }
     }
-    query += " ORDER BY last_name";
-    const result = await client.query(query);
-    return result.rows;
+    const offset = (pageNumber - 1) * USERS_LIMIT;
+    usersQuery += ` ORDER BY last_name OFFSET ${offset} LIMIT ${USERS_LIMIT}`;
+
+    const [usersResult, countResult] = await Promise.all([
+      client.query(usersQuery),
+      client.query(countQuery)
+    ]);
+
+    return {
+      page: offset,
+      users: usersResult.rows,
+      totalCount: countResult.rowCount
+    };
   } finally {
     client.release();
   }

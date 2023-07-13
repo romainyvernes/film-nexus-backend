@@ -1,11 +1,15 @@
 import * as User from '../models/User';
 import Joi from "joi";
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
+import { default as redis } from "../redis";
+
+const DEFAULT_PAGE_NUMBER = 1;
 
 export const getUsers = async (req, res) => {
   const { error, value } = baseSchema
     .append({
-      projectId: Joi.string().uuid().required()
+      projectId: Joi.string().uuid().required(),
+      page: Joi.number().optional(),
     })
     .fork(["username", "firstName", "lastName", "password"], (schema) => schema.optional())
     .min(1)
@@ -21,15 +25,47 @@ export const getUsers = async (req, res) => {
     firstName,
     lastName,
     projectId,
+    page,
   } = value;
+  const pageNumber = page || DEFAULT_PAGE_NUMBER;
+  const redisKey = `users:accessor:${userId}:project:${projectId}`;
+  const redisSubKey = `
+    page:${pageNumber}:search:${[username, firstName, lastName].join(",")}
+  `;
 
   try {
-    const users = await User.getUsers(
+    const storedResults = await redis.get(redisKey);
+    let storedResultsAsJson = {};
+    if (storedResults) {
+      storedResultsAsJson = JSON.parse(storedResults);
+      const storedUsersObj = storedResultsAsJson[redisSubKey];
+      if (storedUsersObj) {
+        return res.json(storedUsersObj);
+      }
+    }
+    const usersObj = await User.getUsers(
       projectId,
       userId,
-      { username, firstName, lastName }
+      {
+        username,
+        firstName,
+        lastName,
+      },
+      pageNumber,
     );
-    res.json(users);
+
+    // save copy of search results in redis
+    await redis.set(
+      redisKey,
+      JSON.stringify({
+        ...storedResultsAsJson,
+        [redisSubKey]: usersObj
+      },
+      "EX",
+      5 * 60 // key expiration set to 5 minutes
+    ));
+
+    res.json(usersObj);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Error retrieving user' });
   }

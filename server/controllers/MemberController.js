@@ -1,5 +1,6 @@
 import * as Member from "../models/Member";
 import { baseSchema, updatedSchema } from "../validation/schemas/Member";
+import { default as redis } from "../redis";
 
 export const createMember = async (req, res) => {
   const { error, value } = baseSchema.validate(
@@ -42,6 +43,10 @@ export const createMember = async (req, res) => {
       memberId,
       { position, isAdmin }
     );
+
+    // remove all user search results stored in redis
+    await redis.del(`users:accessor:${userId}:project:${projectId}`);
+
     res.status(201).json(createdMember);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Error creating member' });
