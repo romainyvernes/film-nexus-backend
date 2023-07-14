@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  getAllProjects,
+  getProjects,
   getProjectById,
   createProject,
   updateProject,
@@ -10,7 +10,7 @@ import {
 const router = Router();
 
 /* GET projects for logged in user */
-router.get("/", getAllProjects);
+router.get("/", getProjects);
 
 /* POST create a new project for logged in user */
 router.post("/", createProject);

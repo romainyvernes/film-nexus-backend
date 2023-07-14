@@ -1,8 +1,9 @@
 import request from 'supertest';
 import app from '../../app';
-import { addUser, addProjectMember } from "../utils/helpers";
+import { addUser, addProjectMember, addProject } from "../utils/helpers";
 import { projectInfo, newProjectName, newTestUserInfo, memberInfo } from "../utils/testData";
 import { generateAuthToken } from "../../middleware/jwt";
+import { createProject } from "../../models/Project";
 
 describe('Projects Routes', () => {
   let token, user, secondUser, secondToken;
@@ -69,7 +70,7 @@ describe('Projects Routes', () => {
     newProject = response.body;
   });
 
-  it('GET Retrieve all projects', async () => {
+  it('GET Retrieve all projects w/o search criteria', async () => {
     const response = await request(app)
       .get(`/api/projects`)
       .set('Accept', 'application/json')
@@ -77,14 +78,12 @@ describe('Projects Routes', () => {
 
     expect(response.headers["content-type"]).toMatch(/json/);
     expect(response.status).toEqual(200);
-    // expect(response.body).toEqual({
-    //   projects: expect.any(Array),
-    //   totalCount: expect.any(Number),
-    //   totalPageCount: expect.any(Number),
-    //   currentPageCount: expect.any(Number),
-    // });
-    expect(response.body).toBeInstanceOf(Array);
-    expect(response.body[0]).toEqual({
+    expect(response.body).toMatchObject({
+      projects: expect.any(Array),
+      totalCount: expect.any(Number),
+      page: 1,
+    });
+    expect(response.body.projects[0]).toEqual({
       id: expect.stringMatching(newProject.id),
       name: expect.stringMatching(projectInfo.name),
       created_on: newProject.created_on,
@@ -92,6 +91,33 @@ describe('Projects Routes', () => {
       members: expect.any(Array),
       is_admin: expect.any(Boolean),
       position: expect.stringMatching(memberInfo.position)
+    });
+  });
+
+  it('GET Retrieve all projects w/ search criteria', async () => {
+    const project = await createProject(
+      user.id,
+      { name: "Find me" },
+      { position: "Director" }
+    );
+    const response = await request(app)
+      .get(`/api/projects?name=find%20me`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.headers["content-type"]).toMatch(/json/);
+    expect(response.status).toEqual(200);
+    expect(response.body).toMatchObject({
+      projects: expect.any(Array),
+      totalCount: 1,
+      page: 1,
+    });
+    expect(response.body.projects).toHaveLength(1);
+    expect(response.body.projects[0]).toMatchObject({
+      id: expect.stringMatching(project.id),
+      name: expect.stringMatching(project.name),
+      created_on: new Date(project.created_on).toISOString(),
+      creator_id: expect.stringMatching(user.id),
     });
   });
 

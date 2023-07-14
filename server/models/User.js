@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import pool from "../db";
 import _ from "lodash";
-import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
+import { formatKeysToSnakeCase, getFilteredFields, getQueryData, getQueryOffset } from "../utils/helpers";
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
 
 const USERS_LIMIT = 10;
@@ -42,14 +42,14 @@ export const getUsers = async (projectId, accessorId, searchParams = {}, pageNum
         .filter((key) => searchParams[key] !== undefined);
       if (keys.length > 0) {
         const searchStr = keys
-        .map((param) => (
-          `${_.snakeCase(param).toLowerCase()} ILIKE '%${searchParams[param]}%'`
-        ))
-        .join(" OR ");
+          .map((param) => (
+            `${_.snakeCase(param).toLowerCase()} ILIKE '%${searchParams[param]}%'`
+          ))
+          .join(" OR ");
         usersQuery += ` AND (${searchStr})`;
       }
     }
-    const offset = (pageNumber - 1) * USERS_LIMIT;
+    const offset = getQueryOffset(pageNumber, USERS_LIMIT);
     usersQuery += ` ORDER BY last_name OFFSET ${offset} LIMIT ${USERS_LIMIT}`;
 
     const [usersResult, countResult] = await Promise.all([
@@ -58,7 +58,7 @@ export const getUsers = async (projectId, accessorId, searchParams = {}, pageNum
     ]);
 
     return {
-      page: offset,
+      page: pageNumber,
       users: usersResult.rows,
       totalCount: countResult.rowCount
     };

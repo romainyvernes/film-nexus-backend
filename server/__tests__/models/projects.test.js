@@ -1,6 +1,6 @@
 import * as Project from '../../models/Project';
 import { v4 as uuidv4 } from 'uuid';
-import { addProjectMember, addUser } from "../utils/helpers";
+import { addProject, addProjectMember, addUser } from "../utils/helpers";
 import { projectInfo, newProjectName, memberInfo, newTestUserInfo } from "../utils/testData";
 
 describe('Project Model', () => {
@@ -69,12 +69,16 @@ describe('Project Model', () => {
     });
   });
 
-  it('should retrieve all projects', async () => {
-    const projects = await Project.getProjects(newProject.creator_id);
+  it('should retrieve all projects if no search criteria provided', async () => {
+    const projectsObj = await Project.getProjects(newProject.creator_id);
 
-    expect(projects).toBeInstanceOf(Array)
-    expect(projects).toHaveLength(1);
-    expect(projects[0]).toEqual({
+    expect(projectsObj).toMatchObject({
+      page: 1,
+      projects: expect.any(Array),
+      totalCount: expect.any(Number)
+    });
+    expect(projectsObj.projects).toHaveLength(1);
+    expect(projectsObj.projects[0]).toEqual({
       id: expect.stringMatching(newProject.id),
       name: expect.stringMatching(projectInfo.name),
       created_on: newProject.created_on,
@@ -82,6 +86,30 @@ describe('Project Model', () => {
       members: expect.any(Array),
       is_admin: expect.any(Boolean),
       position: expect.stringMatching(memberInfo.position)
+    });
+  });
+
+  it('should retrieve select projects if search criteria provided', async () => {
+    // create new project in DB
+    const project = await Project.createProject(
+      user.id,
+      { name: "My newest project" },
+      { position: "Director" }
+    );
+
+    const projectsObj = await Project.getProjects(user.id, { name: "newest" });
+
+    expect(projectsObj).toMatchObject({
+      page: 1,
+      projects: expect.any(Array),
+      totalCount: 1
+    });
+    expect(projectsObj.projects).toHaveLength(1);
+    expect(projectsObj.projects[0]).toMatchObject({
+      id: expect.stringMatching(project.id),
+      name: expect.stringMatching(project.name),
+      created_on: project.created_on,
+      creator_id: expect.stringMatching(user.id),
     });
   });
 

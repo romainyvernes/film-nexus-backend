@@ -1,6 +1,6 @@
 import pool from "../db";
 import * as Member from "./Member";
-import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
+import { formatKeysToSnakeCase, getFilteredFields, getQueryData, getQueryOffset } from "../utils/helpers";
 import { userProps } from "./User";
 import { baseSchema as projectBaseSchema, updatedSchema } from "../validation/schemas/Project";
 import { baseSchema as memberBaseSchema } from "../validation/schemas/Member";
@@ -15,33 +15,54 @@ const projectPropsStr = [
   "creator_id",
 ].map((prop) => `projects.${prop}`).join(", ");
 
-export const getProjects = async (accessorId) => {
+const PROJECTS_LIMIT = 30;
+
+export const getProjects = async (accessorId, searchParams = {}, pageNumber = 1) => {
   const client = await pool.connect();
   try {
-    const result = await client.query(
-      `
-        SELECT ${projectPropsStr},
-        (
-          SELECT
-            json_agg(
-              json_build_object(
-                ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
-              )
+    const offset = getQueryOffset(pageNumber, PROJECTS_LIMIT);
+    const countQuery = `
+      SELECT COUNT(*)
+      FROM
+        projects
+        JOIN project_members AS pm ON projects.id = pm.project_id
+      WHERE pm.user_id = '${accessorId}'
+        AND projects.name ILIKE '%${searchParams.name || ""}%'
+    `;
+    const projectsQuery = `
+      SELECT ${projectPropsStr},
+      (
+        SELECT
+          json_agg(
+            json_build_object(
+              ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
             )
-          FROM
-            project_members
-            JOIN users ON project_members.user_id = users.id
-          WHERE project_members.project_id = projects.id
-        ) AS members,
-        ${Member.memberProps.map((prop) => `pm.${prop}`).join(", ")}
+          )
         FROM
-          projects
-          JOIN project_members AS pm ON projects.id = pm.project_id
-        WHERE pm.user_id = $1
-      `,
-      [accessorId]
-    );
-    return result.rows;
+          project_members
+          JOIN users ON project_members.user_id = users.id
+        WHERE project_members.project_id = projects.id
+      ) AS members,
+      ${Member.memberProps.map((prop) => `pm.${prop}`).join(", ")}
+      FROM
+        projects
+        JOIN project_members AS pm ON projects.id = pm.project_id
+      WHERE pm.user_id = '${accessorId}'
+        AND projects.name ILIKE '%${searchParams.name || ""}%'
+      ORDER BY pm.is_admin, projects.created_on DESC
+      OFFSET ${offset}
+      LIMIT ${PROJECTS_LIMIT}
+    `;
+    const [countResult, projectsResult] = await Promise.all([
+      client.query(countQuery),
+      client.query(projectsQuery)
+    ]);
+
+    return {
+      page: pageNumber,
+      projects: projectsResult.rows,
+      totalCount: countResult.rowCount
+    };
   } finally {
     client.release();
   }

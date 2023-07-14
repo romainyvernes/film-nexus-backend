@@ -1,12 +1,57 @@
 import * as Project from '../models/Project';
+import Joi from "joi";
+import { default as redis } from "../redis";
 import { baseSchema as projectBaseSchema, updatedSchema } from "../validation/schemas/Project";
 import { baseSchema as memberBaseSchema } from "../validation/schemas/Member";
 
-export const getAllProjects = async (req, res) => {
+const DEFAULT_PAGE_NUMBER = 1;
+
+export const getProjects = async (req, res) => {
+  const { error, value } = projectBaseSchema
+    .append({
+      page: Joi.number().optional(),
+    })
+    .fork(["creatorId", "name"], (schema) => schema.optional())
+    .validate({ ...req.body, ...req.query }, { allowUnknown: true });
+
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+
+  const { page, name } = value;
+  const pageNumber = page || DEFAULT_PAGE_NUMBER;
   const userId = req.userId;
+  const redisKey = "projects";
+  const redisSubKey = `page:${pageNumber}:search:${name}`;
+
   try {
-    const projects = await Project.getProjects(userId);
-    res.json(projects);
+    const storedResults = await redis.get(redisKey);
+    let storedResultsAsJson = {};
+    if (storedResults) {
+      storedResultsAsJson = JSON.parse(storedResults);
+      const storedProjectsObj = storedResultsAsJson[redisSubKey];
+      if (storedProjectsObj) {
+        return res.json(storedProjectsObj);
+      }
+    }
+    const projectsObj = await Project.getProjects(
+      userId,
+      { name },
+      pageNumber
+    );
+
+    // save copy of search results in redis
+    await redis.set(
+      redisKey,
+      JSON.stringify({
+        ...storedResultsAsJson,
+        [redisSubKey]: projectsObj
+      },
+      "EX",
+      5 * 60 // key expiration set to 5 minutes
+    ));
+
+    res.json(projectsObj);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Error retrieving projects' });
   }
@@ -138,6 +183,10 @@ export const deleteProject = async (req, res) => {
   const userId = req.userId;
   try {
     await Project.deleteProject(projectId, userId);
+
+    // remove all project search results stored in redis
+    await redis.del("projects");
+
     res.sendStatus(200);
   } catch (error) {
     let errorStatus;

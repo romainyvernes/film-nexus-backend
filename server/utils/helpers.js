@@ -50,3 +50,7 @@ export const formatKeysToSnakeCase = (obj) => {
   }
   return snakeCaseObj;
 };
+
+export const getQueryOffset = (pageNumber, limit) => {
+  return (pageNumber - 1) * limit;
+};

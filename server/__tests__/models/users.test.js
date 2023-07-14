@@ -66,7 +66,7 @@ describe("User Model", () => {
     const usersObj = await User.getUsers(project.id, newTestUser.id);
 
     expect(usersObj).toMatchObject({
-      page: expect.any(Number),
+      page: 1,
       users: expect.any(Array),
       totalCount: expect.any(Number)
     });
@@ -84,7 +84,7 @@ describe("User Model", () => {
     const usersObj = await User.getUsers(project.id, newTestUser.id, searchParams);
 
     expect(usersObj).toMatchObject({
-      page: expect.any(Number),
+      page: 1,
       users: expect.any(Array),
       totalCount: expect.any(Number)
     });
