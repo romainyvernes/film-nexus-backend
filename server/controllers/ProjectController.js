@@ -3,8 +3,7 @@ import Joi from "joi";
 import { default as redis } from "../redis";
 import { baseSchema as projectBaseSchema, updatedSchema } from "../validation/schemas/Project";
 import { baseSchema as memberBaseSchema } from "../validation/schemas/Member";
-
-const DEFAULT_PAGE_NUMBER = 1;
+import { DEFAULT_PAGE_NUMBER } from "../utils/helpers";
 
 export const getProjects = async (req, res) => {
   const { error, value } = projectBaseSchema
@@ -19,6 +18,11 @@ export const getProjects = async (req, res) => {
   }
 
   const { page, name } = value;
+
+  if (name && !name.match(/^[A-Za-z ]+$/)) {
+    return res.status(400).json({ message: "Special characters or numbers are not allowed" });
+  }
+
   const pageNumber = page || DEFAULT_PAGE_NUMBER;
   const userId = req.userId;
   const redisKey = "projects";

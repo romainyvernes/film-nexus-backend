@@ -1,5 +1,7 @@
 import _ from "lodash";
 
+export const DEFAULT_PAGE_NUMBER = 1;
+
 export const getFilteredFields = (updateFields, allowedFields, excludedFields = []) => {
   return Object.keys(updateFields)
     .filter((field) => allowedFields.includes(field) && !excludedFields.includes(field))

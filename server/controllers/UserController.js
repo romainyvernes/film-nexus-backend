@@ -2,8 +2,7 @@ import * as User from '../models/User';
 import Joi from "joi";
 import { baseSchema, updatedSchema } from "../validation/schemas/User";
 import { default as redis } from "../redis";
-
-const DEFAULT_PAGE_NUMBER = 1;
+import { DEFAULT_PAGE_NUMBER } from "../utils/helpers";
 
 export const getUsers = async (req, res) => {
   const { error, value } = baseSchema
@@ -20,6 +19,7 @@ export const getUsers = async (req, res) => {
   }
 
   const userId = req.userId;
+
   const {
     username,
     firstName,
@@ -27,6 +27,14 @@ export const getUsers = async (req, res) => {
     projectId,
     page,
   } = value;
+  const paramsToSanitize = [username, firstName, lastName].filter((variable) => (
+    variable !== undefined
+  ));
+
+  if (paramsToSanitize.length > 0 && !paramsToSanitize.join("").match(/^[A-Za-z1-9 ]+$/)) {
+    return res.status(400).json({ message: "Special characters are not allowed" });
+  }
+
   const pageNumber = page || DEFAULT_PAGE_NUMBER;
   const redisKey = `users:accessor:${userId}:project:${projectId}`;
   const redisSubKey = `
