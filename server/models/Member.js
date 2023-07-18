@@ -114,7 +114,7 @@ export const updateMember = async (projectId, userId, accessorId, updateFields) 
       [value.projectId, value.userId, value.accessorId, ...values]
     );
     if (result.rows.length === 0) {
-      const project = await Project.getProjectById(value.projectId);
+      const project = await Project.getProjectById(value.projectId, value.accessorId);
       if (project) {
         throw new Error("Access denied");
       } else {
@@ -157,7 +157,7 @@ export const deleteMemberById = async (projectId, memberId, accessorId) => {
       [value.userId, value.projectId, value.accessorId]
     );
     if (result.rows.length === 0) {
-      const project = await Project.getProjectById(value.projectId);
+      const project = await Project.getProjectById(value.projectId, value.accessorId);
       if (project) {
         throw new Error("Access denied");
       } else {
@@ -200,7 +200,7 @@ export const deleteMembersByProjectId = async (projectId, accessorId) => {
       [value.projectId, value.accessorId]
     );
     if (result.rows.length === 0) {
-      const project = await Project.getProjectById(value.projectId);
+      const project = await Project.getProjectById(value.projectId, value.accessorId);
       if (project) {
         throw new Error("Access denied");
       } else {
