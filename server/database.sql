@@ -22,3 +22,20 @@ CREATE TABLE IF NOT EXISTS project_members (
   position TEXT NOT NULL,
   is_admin BOOLEAN NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS messages (
+  id UUID NOT NULL PRIMARY KEY DEFAULT uuid_generate_v4(),
+  creator_id UUID NOT NULL,
+  created_on TIMESTAMP NOT NULL DEFAULT now(),
+  text TEXT NOT NULL,
+  project_id UUID NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS files (
+  id UUID NOT NULL PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  created_on TIMESTAMP NOT NULL DEFAULT now(),
+  creator_id UUID NOT NULL,
+  url TEXT NOT NULL,
+  project_id UUID NOT NULL
+);
