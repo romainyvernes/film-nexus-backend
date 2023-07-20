@@ -21,34 +21,25 @@ export async function queryDB(query, values) {
   return result.rows[0];
 }
 
-export async function addUser(userData) {
-  const data = formatKeysToSnakeCase(userData);
-  data.password = await bcrypt.hash(data.password, saltRounds);
-  const { placeholders, values } = getQueryData(data);
+export function addItemIntoDb (tableName, data, returnedColumns = "*") {
+  const { placeholders, values } = getQueryData((formatKeysToSnakeCase(data)));
   const query = `
-    INSERT INTO users (${placeholders.columns})
+    INSERT INTO ${tableName} (${placeholders.columns})
     VALUES (${placeholders.values})
-    RETURNING id, username, created_on, first_name, last_name
+    RETURNING ${returnedColumns}
   `;
   return queryDB(query, values);
+}
+
+export async function addUser(userData) {
+  userData.password = await bcrypt.hash(userData.password, saltRounds);
+  return addItemIntoDb('users', userData, "id, username, created_on, first_name, last_name");
 }
 
 export function addProject(projectData) {
-  const { placeholders, values } = getQueryData((formatKeysToSnakeCase(projectData)));
-  const query = `
-    INSERT INTO projects (${placeholders.columns})
-    VALUES (${placeholders.values})
-    RETURNING *
-  `;
-  return queryDB(query, values);
+  return addItemIntoDb('projects', projectData);
 }
 
 export function addProjectMember(memberData) {
-  const { placeholders, values } = getQueryData(formatKeysToSnakeCase(memberData));
-  const query = `
-    INSERT INTO project_members (${placeholders.columns})
-    VALUES (${placeholders.values})
-    RETURNING *
-  `;
-  return queryDB(query, values);
+  return addItemIntoDb('project_members', memberData);
 }
