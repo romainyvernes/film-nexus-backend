@@ -57,6 +57,8 @@ describe('Project Model', () => {
       created_on: newProject.created_on,
       creator_id: expect.stringMatching(user.id),
       members: expect.any(Array),
+      messages: expect.any(Array),
+      files: expect.any(Array),
       is_admin: expect.any(Boolean),
       position: expect.stringMatching(memberInfo.position)
     });
@@ -84,6 +86,8 @@ describe('Project Model', () => {
       created_on: newProject.created_on,
       creator_id: expect.stringMatching(user.id),
       members: expect.any(Array),
+      messages: expect.any(Array),
+      files: expect.any(Array),
       is_admin: expect.any(Boolean),
       position: expect.stringMatching(memberInfo.position)
     });
@@ -173,6 +177,8 @@ describe('Project Model', () => {
       created_on: newProject.created_on,
       creator_id: expect.stringMatching(user.id),
       members: expect.any(Array),
+      messages: expect.any(Array),
+      files: expect.any(Array),
       is_admin: expect.any(Boolean),
       position: expect.stringMatching(memberInfo.position)
     });
@@ -195,7 +201,9 @@ describe('Project Model', () => {
       name: expect.stringMatching(newProject.name),
       created_on: newProject.created_on,
       creator_id: expect.stringMatching(newProject.creator_id),
-      members: expect.any(Array)
+      members: expect.any(Array),
+      messages: expect.any(Array),
+      files: expect.any(Array),
     });
   });
 });

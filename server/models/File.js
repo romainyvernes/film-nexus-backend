@@ -5,6 +5,13 @@ import { baseSchema, updatedSchema } from "../validation/schemas/File";
 
 const allowedFields = ["name", "url"];
 
+export const fileProps = [
+  "id",
+  "name",
+  "created_on",
+  "url",
+];
+
 export const getFileById = async (id) => {
   const client = await pool.connect();
   try {

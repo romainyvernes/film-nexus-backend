@@ -4,6 +4,11 @@ import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils
 import { baseSchema, updatedSchema } from "../validation/schemas/Message";
 
 const allowedFields = ["text"];
+export const messageProps = [
+  "id",
+  "created_on",
+  "text",
+];
 
 const MESSAGES_LIMIT = 15;
 
