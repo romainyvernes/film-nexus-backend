@@ -5,6 +5,8 @@ import { baseSchema, updatedSchema } from "../validation/schemas/Message";
 
 const allowedFields = ["text"];
 
+const MESSAGES_LIMIT = 15;
+
 export const getMessageById = async (id) => {
   const client = await pool.connect();
   try {
@@ -22,7 +24,7 @@ export const getMessageById = async (id) => {
   }
 };
 
-export const getMessagesByProjectId = async (projectId) => {
+export const getMessagesByProjectId = async (projectId, offset = 0) => {
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -30,8 +32,10 @@ export const getMessagesByProjectId = async (projectId) => {
         SELECT *
         FROM messages
         WHERE project_id = $1
+        OFFSET $2
+        LIMIT $3
       `,
-      [projectId]
+      [projectId, offset, MESSAGES_LIMIT]
     );
     return result.rows;
   } finally {
