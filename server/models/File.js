@@ -12,6 +12,8 @@ export const fileProps = [
   "url",
 ];
 
+const FILES_LIMIT = 15;
+
 export const getFileById = async (id) => {
   const client = await pool.connect();
   try {
@@ -29,18 +31,37 @@ export const getFileById = async (id) => {
   }
 };
 
-export const getFilesByProjectId = async (projectId) => {
+export const getFilesByProjectId = async (projectId, offset = 0) => {
   const client = await pool.connect();
   try {
-    const result = await client.query(
-      `
-        SELECT *
-        FROM files
-        WHERE project_id = $1
-      `,
-      [projectId]
-    );
-    return result.rows;
+    const countQuery = `
+      SELECT COUNT(*)
+      FROM files
+      WHERE project_id = $1
+    `;
+    const fileQuery = `
+      SELECT *
+      FROM files
+      WHERE project_id = $1
+      OFFSET $2
+      LIMIT $3
+    `;
+    const [countResult, fileResult] = await Promise.all([
+      client.query(
+        countQuery,
+        [projectId]
+      ),
+      client.query(
+        fileQuery,
+        [projectId, offset, FILES_LIMIT]
+      )
+    ]);
+
+    return {
+      totalCount: countResult.rowCount,
+      files: fileResult.rows,
+      offset
+    };
   } finally {
     client.release();
   }
@@ -198,10 +219,10 @@ export const deleteFilesByProjectId = async (projectId, accessorId) => {
       [value.projectId, value.accessorId]
     );
     if (result.rows.length === 0) {
-      const files = await getFilesByProjectId(value.projectId);
+      const fileObj = await getFilesByProjectId(value.projectId);
       // confirms the absence of deleted files means one of the conditions
       // failed and not that no files were found
-      if (files.length > 0) {
+      if (fileObj.files.length > 0) {
         throw new Error("Access denied");
       }
     }

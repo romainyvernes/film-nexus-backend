@@ -70,11 +70,15 @@ describe('File Model', () => {
   });
 
   it('should retrieve files by project ID', async () => {
-    const deletedfiles = await File.getFilesByProjectId(project.id);
+    const deletedfilesObj = await File.getFilesByProjectId(project.id);
 
-    expect(deletedfiles).toBeInstanceOf(Array);
-    expect(deletedfiles).toHaveLength(1);
-    expect(deletedfiles[0]).toEqual(file);
+    expect(deletedfilesObj).toMatchObject({
+      totalCount: expect.any(Number),
+      files: expect.any(Array),
+      offset: expect.any(Number),
+    });
+    expect(deletedfilesObj.files).toHaveLength(1);
+    expect(deletedfilesObj.files[0]).toEqual(file);
   });
 
   it('should delete file by ID', async () => {

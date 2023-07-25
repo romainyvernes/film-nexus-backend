@@ -1,11 +1,15 @@
 import * as Message from "../models/Message";
 import * as Member from "../models/Member";
+import Joi from "joi";
 import { baseSchema, updatedSchema } from "../validation/schemas/Message";
 import { default as redis } from "../redis";
 
 export const getMessages = async (req, res) => {
   const { error, value } = baseSchema
     .fork(["creatorId", "text"], (schema) => schema.optional())
+    .append({
+      offset: Joi.number().optional()
+    })
     .validate(
       {
         projectId: req.params.id,
