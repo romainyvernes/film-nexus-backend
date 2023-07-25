@@ -48,9 +48,13 @@ describe('Message Model', () => {
   it('should retrieve messages by project ID', async () => {
     const deletedMessages = await Message.getMessagesByProjectId(project.id);
 
-    expect(deletedMessages).toBeInstanceOf(Array);
-    expect(deletedMessages).toHaveLength(1);
-    expect(deletedMessages[0]).toEqual(message);
+    expect(deletedMessages).toMatchObject({
+      totalCount: expect.any(Number),
+      messages: expect.any(Array),
+      offset: expect.any(Number),
+    });
+    expect(deletedMessages.messages).toHaveLength(1);
+    expect(deletedMessages.messages[0]).toEqual(message);
   });
 
   it('should delete message by ID', async () => {

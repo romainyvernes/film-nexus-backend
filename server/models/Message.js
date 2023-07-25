@@ -32,17 +32,31 @@ export const getMessageById = async (id) => {
 export const getMessagesByProjectId = async (projectId, offset = 0) => {
   const client = await pool.connect();
   try {
-    const result = await client.query(
-      `
-        SELECT *
-        FROM messages
-        WHERE project_id = $1
-        OFFSET $2
-        LIMIT $3
-      `,
-      [projectId, offset, MESSAGES_LIMIT]
-    );
-    return result.rows;
+    const countQuery = `
+      SELECT COUNT(*)
+      FROM messages
+      WHERE project_id = $1
+    `;
+    const messageQuery = `
+      SELECT *
+      FROM messages
+      WHERE project_id = $1
+      OFFSET $2
+      LIMIT $3
+    `;
+    const [countResult, messageResult] = await Promise.all([
+      client.query(countQuery, [projectId]),
+      client.query(
+        messageQuery,
+        [projectId, offset, MESSAGES_LIMIT]
+      )
+    ]);
+
+    return {
+      totalCount: countResult.rowCount,
+      messages: messageResult.rows,
+      offset
+    };
   } finally {
     client.release();
   }
@@ -157,10 +171,10 @@ export const deleteMessagesByProjectId = async (projectId, accessorId) => {
       [value.projectId, value.accessorId]
     );
     if (result.rows.length === 0) {
-      const messages = await getMessagesByProjectId(value.projectId);
+      const messageObj = await getMessagesByProjectId(value.projectId);
       // confirms the absence of deleted messages means one of the conditions
       // failed and not that no messages were found
-      if (messages.length > 0) {
+      if (messageObj.messages.length > 0) {
         throw new Error("Access denied");
       }
     }
