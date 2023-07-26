@@ -10,7 +10,7 @@ export const messageProps = [
   "text",
 ];
 
-const MESSAGES_LIMIT = 15;
+export const MESSAGES_LIMIT = 15;
 
 export const getMessageById = async (id) => {
   const client = await pool.connect();

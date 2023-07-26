@@ -12,7 +12,7 @@ export const fileProps = [
   "url",
 ];
 
-const FILES_LIMIT = 15;
+export const FILES_LIMIT = 15;
 
 export const getFileById = async (id) => {
   const client = await pool.connect();

@@ -63,6 +63,7 @@ export const getProjects = async (accessorId, searchParams = {}, pageNumber = 1)
           messages
           JOIN users ON messages.creator_id = users.id
         WHERE messages.project_id = projects.id
+        LIMIT ${Message.MESSAGES_LIMIT}
       ) AS messages,
       (
         SELECT COALESCE(
@@ -80,6 +81,7 @@ export const getProjects = async (accessorId, searchParams = {}, pageNumber = 1)
           files
           JOIN users ON files.creator_id = users.id
         WHERE files.project_id = projects.id
+        LIMIT ${File.FILES_LIMIT}
       ) AS files,
       ${Member.memberProps.map((prop) => `pm.${prop}`).join(", ")}
       FROM
@@ -154,6 +156,7 @@ export const getProjectById = async (projectId, accessorId) => {
               messages
               JOIN users ON messages.creator_id = users.id
             WHERE messages.project_id = projects.id
+            LIMIT ${Message.MESSAGES_LIMIT}
           ) AS messages,
           (
             SELECT COALESCE(
@@ -171,6 +174,7 @@ export const getProjectById = async (projectId, accessorId) => {
               files
               JOIN users ON files.creator_id = users.id
             WHERE files.project_id = projects.id
+            LIMIT ${File.FILES_LIMIT}
           ) AS files,
           ${Member.memberProps.map((prop) => `pm.${prop}`).join(", ")}
         FROM
