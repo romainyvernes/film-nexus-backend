@@ -3,7 +3,7 @@ import validator from "validator";
 export const sanitizeObj = (obj) => {
   const sanitizedObj = {};
   for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === "string") {
+    if (typeof value === "string" && key !== "url") {
       sanitizedObj[key] = validator.escape(validator.trim(value));
     } else {
       sanitizedObj[key] = value;
