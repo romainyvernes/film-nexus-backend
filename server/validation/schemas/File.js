@@ -4,7 +4,7 @@ export const baseSchema = Joi.object({
   creatorId: Joi.string().uuid().required(),
   projectId: Joi.string().uuid().required(),
   name: Joi.string().required(),
-  url: Joi.string().required(),
+  url: Joi.string().uri().required(),
 });
 
 export const updatedSchema = baseSchema
