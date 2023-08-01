@@ -77,8 +77,6 @@ export const createMessage = async (req, res) => {
       { text }
     );
 
-    // TODO: send new message through socket io for live messaging feature
-
     res.status(201).json(createdMessage);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Error creating message' });

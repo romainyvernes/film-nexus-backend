@@ -7,6 +7,8 @@
 import app from '../app';
 import debugLib from 'debug';
 import http from 'http';
+import { Server } from "socket.io";
+import socketHandlers from "../socketHandlers";
 const debug = debugLib('film-nexus-backend:server');
 
 /**
@@ -21,6 +23,10 @@ app.set('port', port);
  */
 
 const server = http.createServer(app);
+
+// Set up socket io
+const io = new Server(server);
+socketHandlers(io);
 
 /**
  * Listen on provided port, on all network interfaces.
