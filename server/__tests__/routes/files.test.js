@@ -3,6 +3,7 @@ import app from '../../app';
 import { addUser, addProjectMember, addProject } from "../utils/helpers";
 import { projectInfo, newTestUserInfo, memberInfo, updatedTestUserInfo, updatedMemberInfo } from "../utils/testData";
 import { generateAuthToken } from "../../middleware/jwt";
+import path from "path";
 
 describe('Files Routes', () => {
   let token, user, secondUser, secondToken, project, file;
@@ -38,13 +39,11 @@ describe('Files Routes', () => {
   });
 
   it('POST Create a new file', async () => {
-    const fileFields = {
-      name: "Some file name",
-      url: "https://www.google.com"
-    };
+    const filePath = path.resolve(__dirname, "../assets/test.docx");
+
     const response = await request(app)
       .post(`/api/projects/${project.id}/files`)
-      .send(fileFields)
+      .attach("file", filePath)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${token}`);
 
@@ -54,8 +53,6 @@ describe('Files Routes', () => {
       id: expect.any(String),
       creator_id: expect.stringMatching(user.id),
       created_on: expect.any(String),
-      name: expect.stringMatching(fileFields.name),
-      url: expect.stringMatching(fileFields.url),
       project_id: expect.stringMatching(project.id)
     });
 

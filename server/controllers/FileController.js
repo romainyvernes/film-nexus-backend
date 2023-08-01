@@ -3,6 +3,7 @@ import * as Member from "../models/Member";
 import Joi from "joi";
 import { baseSchema, updatedSchema } from "../validation/schemas/File";
 import { default as redis } from "../redis";
+import { deleteFileFromS3 } from "../middleware/fileUpload";
 
 export const getFiles = async (req, res) => {
   const { error, value } = baseSchema
@@ -49,7 +50,8 @@ export const createFile = async (req, res) => {
     {
       projectId: req.params.id,
       creatorId: req.userId,
-      ...req.body
+      url: req.file.position,
+      name: req.file.originalName,
     },
     { allowUnknown: true }
   );
@@ -63,6 +65,7 @@ export const createFile = async (req, res) => {
     creatorId,
     name,
     url,
+    s3FileKey,
   } = value;
 
   try {
@@ -75,7 +78,7 @@ export const createFile = async (req, res) => {
     const createdFile = await File.createFile(
       creatorId,
       projectId,
-      { name, url }
+      { name, url, s3FileKey }
     );
 
     res.status(201).json(createdFile);
@@ -102,14 +105,13 @@ export const updateFile = async (req, res) => {
     id: fileId,
     accessorId,
     name,
-    url,
   } = value;
 
   try {
     const updatedFile = await File.updateFile(
       fileId,
       accessorId,
-      { name, url }
+      { name }
     );
 
     res.status(201).json(updatedFile);
@@ -137,6 +139,12 @@ export const deleteFile = async (req, res) => {
   } = value;
 
   try {
+    const file = await File.getFileById(fileId);
+
+    if (file?.s3_file_key) {
+      await deleteFileFromS3(file.s3_file_key);
+    }
+
     await File.deleteFileById(fileId, accessorId);
     res.sendStatus(200);
   } catch (error) {
@@ -145,7 +153,7 @@ export const deleteFile = async (req, res) => {
       case "access denied":
         errorStatus = 401;
         break;
-      case "File not found":
+      case "file not found":
         errorStatus = 404;
         break;
       default:

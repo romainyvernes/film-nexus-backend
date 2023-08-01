@@ -5,6 +5,7 @@ export const baseSchema = Joi.object({
   projectId: Joi.string().uuid().required(),
   name: Joi.string().required(),
   url: Joi.string().uri().required(),
+  s3FileKey: Joi.string().optional(),
 });
 
 export const updatedSchema = baseSchema

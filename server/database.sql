@@ -37,5 +37,6 @@ CREATE TABLE IF NOT EXISTS files (
   created_on TIMESTAMP NOT NULL DEFAULT now(),
   creator_id UUID NOT NULL,
   url TEXT NOT NULL,
-  project_id UUID NOT NULL
+  project_id UUID NOT NULL,
+  s3_file_key TEXT
 );
