@@ -1,6 +1,6 @@
 import * as Project from '../../models/Project';
 import { v4 as uuidv4 } from 'uuid';
-import { addProject, addProjectMember, addUser } from "../utils/helpers";
+import { addItemIntoDb, addProject, addProjectMember, addUser } from "../utils/helpers";
 import { projectInfo, newProjectName, memberInfo, newTestUserInfo } from "../utils/testData";
 
 describe('Project Model', () => {
@@ -48,7 +48,45 @@ describe('Project Model', () => {
     });
   });
 
+  it('should retrieve all projects if no search criteria provided', async () => {
+    const projectsObj = await Project.getProjects(newProject.creator_id);
+
+    expect(projectsObj).toMatchObject({
+      page: 1,
+      projects: expect.any(Array),
+      totalCount: expect.any(Number)
+    });
+    expect(projectsObj.projects).toHaveLength(1);
+    expect(projectsObj.projects[0]).toEqual({
+      id: expect.stringMatching(newProject.id),
+      name: expect.stringMatching(projectInfo.name),
+      created_on: newProject.created_on,
+      creator_id: expect.stringMatching(user.id),
+      members: expect.any(Array),
+      messages: expect.any(Array),
+      files: expect.any(Array),
+      is_admin: expect.any(Boolean),
+      position: expect.stringMatching(memberInfo.position)
+    });
+  });
+
   it('should find a project by ID', async () => {
+    const messageQuery = addItemIntoDb('messages', {
+      creatorId: user.id,
+      projectId: newProject.id,
+      text: "Another test message"
+    });
+    const fileQuery = addItemIntoDb('files', {
+      creatorId: user.id,
+      projectId: newProject.id,
+      name: "Another file",
+      url: "https://www.google.com"
+    });
+    const [message, file] = await Promise.all([
+      messageQuery,
+      fileQuery,
+    ]);
+
     const project = await Project.getProjectById(newProject.id, newProject.creator_id);
 
     expect(project).toEqual({
@@ -69,27 +107,26 @@ describe('Project Model', () => {
       first_name: expect.stringMatching(newTestUserInfo.firstName),
       last_name: expect.stringMatching(newTestUserInfo.lastName),
     });
-  });
 
-  it('should retrieve all projects if no search criteria provided', async () => {
-    const projectsObj = await Project.getProjects(newProject.creator_id);
-
-    expect(projectsObj).toMatchObject({
-      page: 1,
-      projects: expect.any(Array),
-      totalCount: expect.any(Number)
+    expect(project.messages[0]).toMatchObject({
+      id: expect.stringMatching(message.id),
+      created_on: expect.any(String),
+      text: expect.stringMatching(message.text),
+      posted_by: expect.objectContaining({
+        ...user,
+        created_on: expect.any(String),
+      })
     });
-    expect(projectsObj.projects).toHaveLength(1);
-    expect(projectsObj.projects[0]).toEqual({
-      id: expect.stringMatching(newProject.id),
-      name: expect.stringMatching(projectInfo.name),
-      created_on: newProject.created_on,
-      creator_id: expect.stringMatching(user.id),
-      members: expect.any(Array),
-      messages: expect.any(Array),
-      files: expect.any(Array),
-      is_admin: expect.any(Boolean),
-      position: expect.stringMatching(memberInfo.position)
+
+    expect(project.files[0]).toMatchObject({
+      id: expect.stringMatching(file.id),
+      created_on: expect.any(String),
+      url: expect.stringMatching(file.url),
+      name: expect.stringMatching(file.name),
+      uploaded_by: expect.objectContaining({
+        ...user,
+        created_on: expect.any(String),
+      })
     });
   });
 

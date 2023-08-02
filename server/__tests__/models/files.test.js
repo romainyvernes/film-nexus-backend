@@ -66,7 +66,13 @@ describe('File Model', () => {
   it('should retrieve file by ID', async () => {
     const retrievedfile = await File.getFileById(file.id);
 
-    expect(retrievedfile).toEqual(file);
+    expect(retrievedfile).toMatchObject({
+      ...file,
+      uploaded_by: expect.objectContaining({
+        ...user,
+        created_on: expect.any(String),
+      }),
+    });
   });
 
   it('should retrieve files by project ID', async () => {
@@ -78,7 +84,13 @@ describe('File Model', () => {
       offset: expect.any(Number),
     });
     expect(deletedfilesObj.files).toHaveLength(1);
-    expect(deletedfilesObj.files[0]).toEqual(file);
+    expect(deletedfilesObj.files[0]).toMatchObject({
+      ...file,
+      uploaded_by: expect.objectContaining({
+        ...user,
+        created_on: expect.any(String),
+      }),
+    });
   });
 
   it('should delete file by ID', async () => {

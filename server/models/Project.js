@@ -35,55 +35,62 @@ export const getProjects = async (accessorId, searchParams = {}, pageNumber = 1)
     `;
     const projectsQuery = `
       SELECT ${projectPropsStr},
-      (
-        SELECT
-          json_agg(
-            json_build_object(
-              ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
-            )
+        (
+          SELECT json_agg(member)
+          FROM (
+            SELECT
+              json_build_object(
+                ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+              ) AS member
+            FROM project_members
+              JOIN users ON project_members.user_id = users.id
+            WHERE project_members.project_id = projects.id
+            ORDER BY users.last_name
+          ) AS members
+        ) AS members,
+        (
+          SELECT COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  ${messageProps.map((prop) => `'${prop}', messages.${prop}`).join(", ")},
+                  'posted_by', json_build_object(
+                    ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+                  )
+                )
+              )
+              FROM messages
+                JOIN users ON messages.creator_id = users.id
+              WHERE messages.project_id = projects.id
+              GROUP BY messages.created_on, projects.id
+              ORDER BY messages.created_on
+              LIMIT ${Message.MESSAGES_LIMIT}
+            ),
+            '[]'::json
           )
-        FROM
-          project_members
-          JOIN users ON project_members.user_id = users.id
-        WHERE project_members.project_id = projects.id
-      ) AS members,
-      (
-        SELECT COALESCE(
-          json_agg(
-            json_build_object(
-              ${messageProps.map((prop) => `'${prop}', messages.${prop}`).join(", ")},
-              'posted_by', json_build_object(
-                ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+        ) AS messages,
+        (
+          SELECT COALESCE(
+            (
+              SELECT json_agg(
+                json_build_object(
+                  ${fileProps.map((prop) => `'${prop}', files.${prop}`).join(", ")},
+                  'uploaded_by', json_build_object(
+                    ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+                  )
+                )
               )
-            )
-          ),
-          '[]'::json
-        )
-        FROM
-          messages
-          JOIN users ON messages.creator_id = users.id
-        WHERE messages.project_id = projects.id
-        LIMIT ${Message.MESSAGES_LIMIT}
-      ) AS messages,
-      (
-        SELECT COALESCE(
-          json_agg(
-            json_build_object(
-              ${fileProps.map((prop) => `'${prop}', files.${prop}`).join(", ")},
-              'uploaded_by', json_build_object(
-                ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
-              )
-            )
-          ),
-          '[]'::json
-        )
-        FROM
-          files
-          JOIN users ON files.creator_id = users.id
-        WHERE files.project_id = projects.id
-        LIMIT ${File.FILES_LIMIT}
-      ) AS files,
-      ${Member.memberProps.map((prop) => `pm.${prop}`).join(", ")}
+              FROM files
+                JOIN users ON files.creator_id = users.id
+              WHERE files.project_id = projects.id
+              GROUP BY files.created_on, projects.id
+              ORDER BY files.created_on
+              LIMIT ${File.FILES_LIMIT}
+            ),
+            '[]'::json
+          )
+        ) AS files,
+        ${Member.memberProps.map((prop) => `pm.${prop}`).join(", ")}
       FROM
         projects
         JOIN project_members AS pm ON projects.id = pm.project_id
@@ -129,52 +136,59 @@ export const getProjectById = async (projectId, accessorId) => {
         SELECT
           ${projectPropsStr},
           (
-            SELECT
-              json_agg(
+            SELECT json_agg(member)
+            FROM (
+              SELECT
                 json_build_object(
                   ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
-                )
-              )
-            FROM
-              project_members
-              JOIN users ON project_members.user_id = users.id
-            WHERE project_members.project_id = projects.id
+                ) AS member
+              FROM project_members
+                JOIN users ON project_members.user_id = users.id
+              WHERE project_members.project_id = projects.id
+              ORDER BY users.last_name
+            ) AS members
           ) AS members,
           (
             SELECT COALESCE(
-              json_agg(
-                json_build_object(
-                  ${messageProps.map((prop) => `'${prop}', messages.${prop}`).join(", ")},
-                  'posted_by', json_build_object(
-                    ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+              (
+                SELECT json_agg(
+                  json_build_object(
+                    ${messageProps.map((prop) => `'${prop}', messages.${prop}`).join(", ")},
+                    'posted_by', json_build_object(
+                      ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+                    )
                   )
                 )
+                FROM messages
+                  JOIN users ON messages.creator_id = users.id
+                WHERE messages.project_id = projects.id
+                GROUP BY messages.created_on, projects.id
+                ORDER BY messages.created_on
+                LIMIT ${Message.MESSAGES_LIMIT}
               ),
               '[]'::json
             )
-            FROM
-              messages
-              JOIN users ON messages.creator_id = users.id
-            WHERE messages.project_id = projects.id
-            LIMIT ${Message.MESSAGES_LIMIT}
           ) AS messages,
           (
             SELECT COALESCE(
-              json_agg(
-                json_build_object(
-                  ${fileProps.map((prop) => `'${prop}', files.${prop}`).join(", ")},
-                  'uploaded_by', json_build_object(
-                    ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+              (
+                SELECT json_agg(
+                  json_build_object(
+                    ${fileProps.map((prop) => `'${prop}', files.${prop}`).join(", ")},
+                    'uploaded_by', json_build_object(
+                      ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+                    )
                   )
                 )
+                FROM files
+                  JOIN users ON files.creator_id = users.id
+                WHERE files.project_id = projects.id
+                GROUP BY files.created_on, projects.id
+                ORDER BY files.created_on
+                LIMIT ${File.FILES_LIMIT}
               ),
               '[]'::json
             )
-            FROM
-              files
-              JOIN users ON files.creator_id = users.id
-            WHERE files.project_id = projects.id
-            LIMIT ${File.FILES_LIMIT}
           ) AS files,
           ${Member.memberProps.map((prop) => `pm.${prop}`).join(", ")}
         FROM
@@ -316,29 +330,34 @@ export const deleteProject = async (projectId, accessorId) => {
   try {
     const [
       { rows: projectRows },
-      deletedMembers,
       deletedMessages,
       deletedFiles,
     ] = await Promise.all([
       client.query(
         `
           DELETE FROM projects
-          WHERE id = $1
-            AND id = (
-              SELECT project_id
-              FROM project_members
-              WHERE user_id = $2
-                AND is_admin = true
-                AND project_id = $1
-            )
+          WHERE id IN (
+            SELECT project_id
+            FROM project_members
+            WHERE user_id = $2
+              AND is_admin = true
+              AND project_id = $1
+          )
           RETURNING *
         `,
         [value.id, accessorId]
       ),
-      Member.deleteMembersByProjectId(value.id, accessorId),
       Message.deleteMessagesByProjectId(value.id, accessorId),
       File.deleteFilesByProjectId(value.id, accessorId),
     ]);
+
+    /* members need to be deleted separately because the accessor
+    is checked against members list to delete messages and files */
+    const deletedMembers = await Member.deleteMembersByProjectId(
+      value.id,
+      accessorId
+    );
+
     return {
       ...projectRows[0],
       members: deletedMembers,

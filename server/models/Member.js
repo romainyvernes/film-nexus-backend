@@ -29,7 +29,8 @@ export const getMember = async (projectId, userId) => {
       `
         SELECT *
         FROM project_members
-        WHERE project_id = $1 AND user_id = $2
+          JOIN users ON project_members.user_id = users.id
+        WHERE project_members.project_id = $1 AND project_members.user_id = $2
       `,
       [value.projectId, value.userId]
     );

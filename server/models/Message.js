@@ -2,6 +2,7 @@ import pool from "../db";
 import Joi from "joi";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
 import { baseSchema, updatedSchema } from "../validation/schemas/Message";
+import { userProps } from "./User";
 
 const allowedFields = ["text"];
 export const messageProps = [
@@ -17,9 +18,14 @@ export const getMessageById = async (id) => {
   try {
     const result = await client.query(
       `
-        SELECT *
+        SELECT
+          messages.*,
+          json_build_object(
+            ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+          ) AS posted_by
         FROM messages
-        WHERE id = $1
+          JOIN users ON messages.creator_id = users.id
+        WHERE messages.id = $1
       `,
       [id]
     );
@@ -38,9 +44,15 @@ export const getMessagesByProjectId = async (projectId, offset = 0) => {
       WHERE project_id = $1
     `;
     const messageQuery = `
-      SELECT *
+      SELECT
+        messages.*,
+        json_build_object(
+          ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+        ) AS posted_by
       FROM messages
-      WHERE project_id = $1
+        JOIN users ON messages.creator_id = users.id
+      WHERE messages.project_id = $1
+      ORDER BY messages.created_on
       OFFSET $2
       LIMIT $3
     `;
@@ -159,21 +171,21 @@ export const deleteMessagesByProjectId = async (projectId, accessorId) => {
     const result = await client.query(
       `
         DELETE FROM messages
-        WHERE project_id = $1
-          AND project_id IN (
-            SELECT project_id
-            FROM project_members
-            WHERE user_id = $2
-              AND is_admin = true
-          )
+        WHERE project_id IN (
+          SELECT project_id
+          FROM project_members
+          WHERE project_id = $1
+            AND user_id = $2
+            AND is_admin = true
+        )
         RETURNING *
       `,
       [value.projectId, value.accessorId]
     );
     if (result.rows.length === 0) {
       const messageObj = await getMessagesByProjectId(value.projectId);
-      // confirms the absence of deleted messages means one of the conditions
-      // failed and not that no messages were found
+      // the presence of messages for a given project means the accessor
+      // is the problem
       if (messageObj.messages.length > 0) {
         throw new Error("Access denied");
       }

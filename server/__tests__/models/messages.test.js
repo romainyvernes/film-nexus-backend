@@ -42,7 +42,13 @@ describe('Message Model', () => {
   it('should retrieve message by ID', async () => {
     const retrievedMessage = await Message.getMessageById(message.id);
 
-    expect(retrievedMessage).toEqual(message);
+    expect(retrievedMessage).toMatchObject({
+      ...message,
+      posted_by: expect.objectContaining({
+        ...user,
+        created_on: expect.any(String),
+      }),
+    });
   });
 
   it('should retrieve messages by project ID', async () => {
@@ -54,13 +60,19 @@ describe('Message Model', () => {
       offset: expect.any(Number),
     });
     expect(deletedMessages.messages).toHaveLength(1);
-    expect(deletedMessages.messages[0]).toEqual(message);
+    expect(deletedMessages.messages[0]).toMatchObject({
+      ...message,
+      posted_by: expect.objectContaining({
+        ...user,
+        created_on: expect.any(String),
+      }),
+    });
   });
 
   it('should delete message by ID', async () => {
     const deletedMessage = await Message.deleteMessageById(message.id, user.id);
 
-    expect(deletedMessage).toEqual(message);
+    expect(deletedMessage).toMatchObject(message);
   });
 
   it('should delete messages by project ID', async () => {

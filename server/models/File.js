@@ -2,6 +2,7 @@ import pool from "../db";
 import Joi from "joi";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils/helpers";
 import { baseSchema, updatedSchema } from "../validation/schemas/File";
+import { userProps } from "./User";
 
 const allowedFields = ["name", "url"];
 
@@ -19,9 +20,14 @@ export const getFileById = async (id) => {
   try {
     const result = await client.query(
       `
-        SELECT *
+        SELECT
+          files.*,
+          json_build_object(
+            ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+          ) AS uploaded_by
         FROM files
-        WHERE id = $1
+          JOIN users ON files.creator_id = users.id
+        WHERE files.id = $1
       `,
       [id]
     );
@@ -40,9 +46,15 @@ export const getFilesByProjectId = async (projectId, offset = 0) => {
       WHERE project_id = $1
     `;
     const fileQuery = `
-      SELECT *
+      SELECT
+        files.*,
+        json_build_object(
+          ${userProps.map((prop) => `'${prop}', users.${prop}`).join(", ")}
+        ) AS uploaded_by
       FROM files
-      WHERE project_id = $1
+        JOIN users ON files.creator_id = users.id
+      WHERE files.project_id = $1
+      ORDER BY files.created_on
       OFFSET $2
       LIMIT $3
     `;
@@ -207,13 +219,13 @@ export const deleteFilesByProjectId = async (projectId, accessorId) => {
     const result = await client.query(
       `
         DELETE FROM files
-        WHERE project_id = $1
-          AND project_id IN (
-            SELECT project_id
-            FROM project_members
-            WHERE user_id = $2
-              AND is_admin = true
-          )
+        WHERE project_id IN (
+          SELECT project_id
+          FROM project_members
+          WHERE project_id = $1
+            AND user_id = $2
+            AND is_admin = true
+        )
         RETURNING *
       `,
       [value.projectId, value.accessorId]

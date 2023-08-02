@@ -65,11 +65,12 @@ describe('Member Model', () => {
       user.id,
     );
 
-    expect(member).toEqual({
+    expect(member).toMatchObject({
       project_id: expect.stringMatching(project.id),
       user_id: expect.stringMatching(user.id),
       is_admin: true,
       position: expect.stringMatching(memberInfo.position),
+      ...user
     });
   });
 
