@@ -56,3 +56,14 @@ export const formatKeysToSnakeCase = (obj) => {
 export const getQueryOffset = (pageNumber, limit) => {
   return (pageNumber - 1) * limit;
 };
+
+export const formatDataForSortedSet = (data, offset) => {
+  const formattedData = [];
+
+  data.forEach((el, index) => {
+    formattedData.push(index + offset);
+    formattedData.push(JSON.stringify(el));
+  });
+
+  return formattedData;
+};

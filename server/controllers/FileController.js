@@ -4,6 +4,10 @@ import Joi from "joi";
 import { baseSchema, updatedSchema } from "../validation/schemas/File";
 import { default as redis } from "../redis";
 import { deleteFileFromS3 } from "../middleware/fileUpload";
+import { formatDataForSortedSet } from "../utils/helpers";
+
+// expiration time in Redis
+const FILE_TTL = 60 * 5;
 
 export const getFiles = async (req, res) => {
   const { error, value } = baseSchema
@@ -23,11 +27,14 @@ export const getFiles = async (req, res) => {
     return res.status(400).json({ message: error.details[0].message });
   }
 
-  const {
+  let {
     projectId,
     offset,
   } = value;
   const userId = req.userId;
+  const fileRedisKey = `projects:${projectId}:files`;
+  const countRedisKey = `${fileRedisKey}:count`;
+  offset = offset || 0;
 
   try {
     const accessor = await Member.getMember(projectId, userId);
@@ -36,9 +43,30 @@ export const getFiles = async (req, res) => {
       return res.status(401).json({ message: "Access denied" });
     }
 
-    // TODO: store Files in redis
+    const endValue = offset + File.FILES_LIMIT;
+    const [storedResults, totalCount] = await Promise.all([
+      redis.zrangebyscore(fileRedisKey, offset, endValue),
+      redis.get(countRedisKey)
+    ]);
+    const expectedCount = endValue - offset;
+
+    if (storedResults.length === expectedCount) {
+      return res.json({
+        totalCount,
+        files: storedResults.map((result) => JSON.parse(result)),
+        offset
+      });
+    }
 
     const fileObj = await File.getFilesByProjectId(projectId, offset);
+    const formattedMessages = formatDataForSortedSet(fileObj.files, offset);
+
+    await Promise.all([
+      redis.zadd(fileRedisKey, ...formattedMessages),
+      redis.set(countRedisKey, fileObj.totalCount)
+    ]);
+    await redis.expire(fileRedisKey, FILE_TTL);
+
     res.json(fileObj);
   } catch(error) {
     res.status(500).json({ message: error.message || 'Error retrieving Files' });
@@ -81,6 +109,11 @@ export const createFile = async (req, res) => {
       { name, url, s3FileKey }
     );
 
+    // clear files and total count to avoid inaccurate data
+    const fileRedisKey = `projects:${projectId}:files`;
+    const countRedisKey = `${fileRedisKey}:count`;
+    await redis.del([fileRedisKey, countRedisKey]);
+
     res.status(201).json(createdFile);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Error creating File' });
@@ -114,6 +147,11 @@ export const updateFile = async (req, res) => {
       { name }
     );
 
+    // clear files and total count to avoid inaccurate data
+    const fileRedisKey = `projects:${updatedFile.project_id}:files`;
+    const countRedisKey = `${fileRedisKey}:count`;
+    await redis.del([fileRedisKey, countRedisKey]);
+
     res.status(201).json(updatedFile);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Error creating File' });
@@ -146,6 +184,12 @@ export const deleteFile = async (req, res) => {
     }
 
     await File.deleteFileById(fileId, accessorId);
+
+    // clear files and total count to avoid inaccurate data
+    const fileRedisKey = `projects:${file.project_id}:files`;
+    const countRedisKey = `${fileRedisKey}:count`;
+    await redis.del([fileRedisKey, countRedisKey]);
+
     res.sendStatus(200);
   } catch (error) {
     let errorStatus;

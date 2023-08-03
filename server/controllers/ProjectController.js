@@ -118,6 +118,10 @@ export const createProject = async (req, res) => {
       { name },
       { position }
     );
+
+    // remove all project search results stored in redis
+    await redis.del("projects");
+
     res.status(201).json(createdProject);
   } catch (error) {
     res.status(500).json({ message: error.message || 'Error creating project' });
@@ -152,6 +156,10 @@ export const updateProject = async (req, res) => {
       userId,
       { name }
     );
+
+    // remove all project search results stored in redis
+    await redis.del("projects");
+
     res.json(updatedProject);
   } catch (error) {
     let errorStatus;
