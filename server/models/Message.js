@@ -52,7 +52,7 @@ export const getMessagesByProjectId = async (projectId, offset = 0) => {
       FROM messages
         JOIN users ON messages.creator_id = users.id
       WHERE messages.project_id = $1
-      ORDER BY messages.created_on
+      ORDER BY messages.created_on DESC
       OFFSET $2
       LIMIT $3
     `;

@@ -54,7 +54,7 @@ export const getFilesByProjectId = async (projectId, offset = 0) => {
       FROM files
         JOIN users ON files.creator_id = users.id
       WHERE files.project_id = $1
-      ORDER BY files.created_on
+      ORDER BY files.created_on DESC
       OFFSET $2
       LIMIT $3
     `;
