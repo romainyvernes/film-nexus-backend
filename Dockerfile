@@ -17,7 +17,7 @@ RUN npm run build
 COPY . .
 
 # Expose the ports for Express, PostgreSQL, and Redis
-EXPOSE 3000
+EXPOSE 5000
 EXPOSE 5432
 EXPOSE 6379
 
