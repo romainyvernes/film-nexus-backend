@@ -20,10 +20,11 @@
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [
       "./utils",
-      "./config"
+      "./server/__tests__/jest.setup.js"
     ],
-    "globalSetup": "./server/__tests__/config/globalSetup.js",
-    "globalTeardown": "./server/__tests__/config/globalTeardown.js"
+    "setupFilesAfterEnv": [
+      "./server/__tests__/jest.setup.js"
+    ]
   },
   "babel": {
     "presets": [
@@ -43,7 +44,6 @@
     "@babel/cli": "^7.21.5",
     "@babel/core": "^7.22.1",
     "@babel/preset-env": "^7.22.4",
-    "bcrypt": "^5.1.0",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
@@ -56,6 +56,8 @@
     "lodash": "^4.17.21",
     "multer": "^1.4.5-lts.1",
     "multer-s3": "^3.0.1",
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
     "path": "^0.12.7",
     "pg": "^8.11.0",
     "socket.io": "^4.7.1",

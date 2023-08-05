@@ -11,7 +11,6 @@ describe('Message Model', () => {
       username: newTestUserInfo.username,
       firstName: newTestUserInfo.firstName,
       lastName: newTestUserInfo.lastName,
-      password: newTestUserInfo.password,
     });
     // add new project in DB
     project = await addProject({

@@ -1,9 +1,7 @@
 import fs from "fs";
 import pool from "../../db";
 import path from "path";
-import bcrypt from "bcrypt";
 import { formatKeysToSnakeCase, getQueryData } from "../../utils/helpers";
-import { saltRounds } from "../../models/User";
 
 export function populateDb() {
   // Read the database.sql file
@@ -32,7 +30,6 @@ export function addItemIntoDb (tableName, data, returnedColumns = "*") {
 }
 
 export async function addUser(userData) {
-  userData.password = await bcrypt.hash(userData.password, saltRounds);
   return addItemIntoDb('users', userData, "id, username, created_on, first_name, last_name");
 }
 

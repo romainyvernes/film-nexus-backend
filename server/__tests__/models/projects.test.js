@@ -11,7 +11,6 @@ describe('Project Model', () => {
       username: newTestUserInfo.username,
       firstName: newTestUserInfo.firstName,
       lastName: newTestUserInfo.lastName,
-      password: newTestUserInfo.password,
     });
   });
 
@@ -184,7 +183,6 @@ describe('Project Model', () => {
       username: "some user",
       firstName: "Testy",
       lastName: "Test",
-      password: "testuser123",
     });
 
     await addProjectMember({

@@ -1,7 +1,7 @@
 import * as User from "../../models/User";
 import { v4 as uuidv4 } from 'uuid';
 import { addProject, addUser, clearDb, populateDb } from "../utils/helpers";
-import { incorrectPassword, newTestUserInfo, projectInfo, updatedTestUserInfo } from "../utils/testData";
+import { newTestUserInfo, projectInfo, updatedTestUserInfo } from "../utils/testData";
 
 describe("User Model", () => {
   beforeAll(async () => {
@@ -12,9 +12,8 @@ describe("User Model", () => {
   let newTestUser, secondUser, thirdUser, project;
 
   it("should NOT create a new user without required fields", async () => {
-    await expect(User.createUser(
+    await expect(User.upsertUser(
       newTestUserInfo.username,
-      newTestUserInfo.password,
       {
         firstName: newTestUserInfo.firstName,
       },
@@ -22,9 +21,8 @@ describe("User Model", () => {
   });
 
   it("should NOT create a new user with incorrectly formatted data", async () => {
-    await expect(User.createUser(
+    await expect(User.upsertUser(
       newTestUserInfo.username,
-      newTestUserInfo.password,
       {
         firstName: "",
         lastName: newTestUserInfo.lastName,
@@ -33,9 +31,8 @@ describe("User Model", () => {
   });
 
   it("should create a new user", async () => {
-    newTestUser = await User.createUser(
+    newTestUser = await User.upsertUser(
       newTestUserInfo.username,
-      newTestUserInfo.password,
       {
         firstName: newTestUserInfo.firstName,
         lastName: newTestUserInfo.lastName,
@@ -59,7 +56,6 @@ describe("User Model", () => {
         username: "jackie_O",
         firstName: "Jackie",
         lastName: "O",
-        password: "testy123"
       }),
       addProject({ ...projectInfo, creatorId: newTestUser.id })
     ]);
@@ -107,7 +103,6 @@ describe("User Model", () => {
       last_name: expect.stringMatching(newTestUserInfo.lastName),
       created_on: newTestUser.created_on,
     });
-    expect(user.password).toBeUndefined();
   });
 
   it("should return undefined if attempting to retrieve a user with an invalid ID", async () => {
@@ -125,59 +120,40 @@ describe("User Model", () => {
       last_name: expect.stringMatching(newTestUserInfo.lastName),
       created_on: newTestUser.created_on,
     });
-    expect(user.password).toBeUndefined();
   });
 
   it("should return user not found error if attempting to update a user with an invalid ID", async () => {
     await expect(User.updateUser(
       uuidv4(),
-      newTestUserInfo.password,
       {
         firstName: updatedTestUserInfo.firstName,
         lastName: updatedTestUserInfo.lastName,
-        password: updatedTestUserInfo.password
       }
     )).rejects.toThrow("User not found");
   });
 
-  it("should NOT update a user without proper credentials", async () => {
+  it("should NOT update a user with no value to update", async () => {
     await expect(User.updateUser(
       newTestUser.id,
-      incorrectPassword,
-      {
-        firstName: updatedTestUserInfo.firstName,
-        lastName: updatedTestUserInfo.lastName,
-        password: updatedTestUserInfo.password,
-      }
-    )).rejects.toThrow("Incorrect password");
-  });
-
-  it("should NOT update a user with proper credentials but no value to update", async () => {
-    await expect(User.updateUser(
-      newTestUser.id,
-      newTestUserInfo.password,
       {}
     )).rejects.toThrow();
   });
 
-  it("should NOT update a user with proper credentials but incorrectly formatted values", async () => {
+  it("should NOT update a user with incorrectly formatted values", async () => {
     await expect(User.updateUser(
       newTestUser.id,
-      newTestUserInfo.password,
       {
         lastName: 123
       }
     )).rejects.toThrow();
   });
 
-  it("should update a user with proper credentials", async () => {
+  it("should update a user", async () => {
     const updatedTestUser = await User.updateUser(
       newTestUser.id,
-      newTestUserInfo.password,
       {
         firstName: updatedTestUserInfo.firstName,
         lastName: updatedTestUserInfo.lastName,
-        password: updatedTestUserInfo.password
       }
     );
 
@@ -192,24 +168,15 @@ describe("User Model", () => {
     newTestUser = updatedTestUser;
   });
 
-  it("should NOT delete a user without proper credentials", async () => {
-    await expect(User.deleteUser(
-      newTestUser.id,
-      incorrectPassword
-    )).rejects.toThrow("Incorrect password");
-  });
-
   it("should return undefined if attempting to delete a user with an invalid ID", async () => {
     await expect(User.deleteUser(
-      uuidv4(),
-      updatedTestUserInfo.password
+      uuidv4()
     )).rejects.toThrow();
   });
 
-  it("should delete a user with proper credentials", async () => {
+  it("should delete a user", async () => {
     const deletedUser = await User.deleteUser(
       newTestUser.id,
-      updatedTestUserInfo.password
     );
 
     expect(deletedUser).toEqual({

@@ -11,7 +11,6 @@ describe('Member Model', () => {
       username: newTestUserInfo.username,
       firstName: newTestUserInfo.firstName,
       lastName: newTestUserInfo.lastName,
-      password: newTestUserInfo.password,
     });
     // add new project in DB
     project = await addProject({
@@ -113,7 +112,6 @@ describe('Member Model', () => {
       username: "second_user",
       firstName: "Second",
       lastName: "User",
-      password: "password123",
     });
 
     nonAdminMember = await Member.createMember(

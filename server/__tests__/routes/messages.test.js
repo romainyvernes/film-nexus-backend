@@ -13,13 +13,11 @@ describe('Messages Routes', () => {
         username: newTestUserInfo.username,
         firstName: newTestUserInfo.firstName,
         lastName: newTestUserInfo.lastName,
-        password: newTestUserInfo.password,
       }),
       addUser({
         username: updatedTestUserInfo.username,
         firstName: updatedTestUserInfo.firstName,
         lastName: updatedTestUserInfo.lastName,
-        password: updatedTestUserInfo.password,
       })
     ]);
     token = generateAuthToken(user.id);

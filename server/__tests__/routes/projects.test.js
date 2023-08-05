@@ -13,7 +13,6 @@ describe('Projects Routes', () => {
       username: newTestUserInfo.username,
       firstName: newTestUserInfo.firstName,
       lastName: newTestUserInfo.lastName,
-      password: newTestUserInfo.password,
     });
     token = generateAuthToken(user.id);
   });
@@ -175,7 +174,6 @@ describe('Projects Routes', () => {
       username: "some user",
       firstName: "Testy",
       lastName: "Test",
-      password: "testuser123",
     });
 
     await addProjectMember({

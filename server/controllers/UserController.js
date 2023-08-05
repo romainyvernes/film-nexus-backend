@@ -10,7 +10,7 @@ export const getUsers = async (req, res) => {
       projectId: Joi.string().uuid().required(),
       page: Joi.number().optional(),
     })
-    .fork(["username", "firstName", "lastName", "password"], (schema) => schema.optional())
+    .fork(["username", "firstName", "lastName"], (schema) => schema.optional())
     .min(1)
     .validate({ ...req.body, ...req.query }, { allowUnknown: true });
 
@@ -80,9 +80,7 @@ export const getUsers = async (req, res) => {
 };
 
 export const getUserById = async (req, res) => {
-  const { error, value } = updatedSchema
-    .fork(["currentPassword"], (schema) => schema.optional())
-    .validate({ ...req.params });
+  const { error, value } = updatedSchema.validate({ ...req.params });
 
   if (error) {
     const { message } = error.details[0];
@@ -118,7 +116,6 @@ export const createUser = async (req, res) => {
     username,
     firstName,
     lastName,
-    password,
   } = value;
   try {
     const user = await User.getUserByUsername(username);
@@ -127,9 +124,8 @@ export const createUser = async (req, res) => {
       return res.status(401).json({ message: "User already exists" });
     }
 
-    const createdUser = await User.createUser(
+    const createdUser = await User.upsertUser(
       username,
-      password,
       {
         firstName,
         lastName,
@@ -161,8 +157,6 @@ export const updateUser = async (req, res) => {
     username,
     firstName,
     lastName,
-    currentPassword,
-    newPassword,
   } = value;
   try {
     if (username) {
@@ -173,21 +167,16 @@ export const updateUser = async (req, res) => {
     }
     const updatedUser = await User.updateUser(
       id,
-      currentPassword,
       {
         username,
         firstName,
         lastName,
-        password: newPassword
       }
     );
     res.json(updatedUser);
   } catch (error) {
     let errorStatus;
     switch(error.message.toLowerCase()) {
-      case "incorrect password":
-        errorStatus = 403;
-        break;
       case "user not found":
         errorStatus = 404;
         break;
@@ -213,9 +202,9 @@ export const deleteUser = async (req, res) => {
     }
   }
 
-  const { id, currentPassword } = value;
+  const { id } = value;
   try {
-    const deletedUser = await User.deleteUser(id, currentPassword);
+    const deletedUser = await User.deleteUser(id);
     if (deletedUser) {
       res.sendStatus(200);
     } else {
@@ -224,9 +213,6 @@ export const deleteUser = async (req, res) => {
   } catch (error) {
     let errorStatus;
     switch(error.message.toLowerCase()) {
-      case "incorrect password":
-        errorStatus = 403;
-        break;
       case "user not found":
         errorStatus = 404;
         break;

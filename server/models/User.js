@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import pool from "../db";
 import _ from "lodash";
 import { formatKeysToSnakeCase, getFilteredFields, getQueryData, getQueryOffset } from "../utils/helpers";
@@ -7,7 +6,7 @@ import { baseSchema, updatedSchema } from "../validation/schemas/User";
 const USERS_LIMIT = 10;
 
 // Add additional modifiable fields as needed
-const allowedFields = ["username", "first_name", "last_name", "password"];
+const allowedFields = ["username", "first_name", "last_name"];
 
 // User object's desired properties
 export const userProps = [
@@ -18,7 +17,6 @@ export const userProps = [
   "last_name",
 ];
 const userPropsStr = userProps.join(", ");
-export const saltRounds = 10;
 
 // search for users, excluding current user and users already in project
 export const getUsers = async (projectId, accessorId, searchParams = {}, pageNumber = 1) => {
@@ -67,10 +65,8 @@ export const getUsers = async (projectId, accessorId, searchParams = {}, pageNum
   }
 };
 
-export const getUserById = async (id, withPassword = false) => {
-  const { error, value } = updatedSchema
-    .fork(["currentPassword"], (schema) => schema.optional())
-    .validate({ id });
+export const getUserById = async (id) => {
+  const { error, value } = updatedSchema.validate({ id });
 
   if (error) {
     throw new Error(error.details[0].message);
@@ -86,11 +82,7 @@ export const getUserById = async (id, withPassword = false) => {
       `,
       [value.id]
     );
-    if (withPassword || !result.rows[0]) {
-      return result.rows[0];
-    }
-    const { password, ...sanitizedUser } = result.rows[0];
-    return sanitizedUser;
+    return result.rows[0];
   } finally {
     client.release();
   }
@@ -113,12 +105,11 @@ export const getUserByUsername = async (username) => {
   }
 };
 
-export const createUser = async (
+export const upsertUser = async (
   username,
-  password,
   fields,
 ) => {
-  const { error, value } = baseSchema.validate({ username, password, ...fields });
+  const { error, value } = baseSchema.validate({ username, ...fields });
 
   if (error) {
     throw new Error(error.details[0].message);
@@ -126,21 +117,23 @@ export const createUser = async (
 
   const client = await pool.connect();
   try {
-    const hashedPassword = await bcrypt.hash(value.password, saltRounds);
-    const excludedFields = ["username", "password"];
+    const excludedFields = ["username"];
     const filteredFields = getFilteredFields(
       formatKeysToSnakeCase(value),
       allowedFields,
       excludedFields
     );
-    const { values, placeholders } = getQueryData(filteredFields, false, 3);
+    const { values, placeholders } = getQueryData(filteredFields, false, 2);
     const result = await client.query(
       `
-        INSERT INTO users (${["username", "password", placeholders.columns].join(", ")})
-        VALUES (${["$1", "$2", placeholders.values].join(", ")})
+        INSERT INTO users (${["username", placeholders.columns].join(", ")})
+        VALUES (${["$1", placeholders.values].join(", ")})
+        ON CONFLICT (username) DO UPDATE SET
+          first_name = EXCLUDED.first_name,
+          last_name = EXCLUDED.last_name
         RETURNING ${userPropsStr}
       `,
-      [value.username, hashedPassword, ...values]
+      [value.username, ...values]
     );
     return result.rows[0];
   } finally {
@@ -148,10 +141,9 @@ export const createUser = async (
   }
 };
 
-export const updateUser = async (id, currentPassword, updateFields) => {
+export const updateUser = async (id, updateFields) => {
   const { error, value } = updatedSchema.min(3).validate({
     id,
-    currentPassword,
     ...updateFields
   });
 
@@ -165,42 +157,31 @@ export const updateUser = async (id, currentPassword, updateFields) => {
     if (!user) {
       throw new Error("User not found");
     }
-    const isAuthenticated = await bcrypt.compare(value.currentPassword, user.password);
 
-    if (isAuthenticated) {
-      let fieldsToUpdate = { ...value };
-      if (fieldsToUpdate.password) {
-        fieldsToUpdate.password = await bcrypt.hash(fieldsToUpdate.password, saltRounds);
-      }
-      fieldsToUpdate = getFilteredFields(
-        formatKeysToSnakeCase(fieldsToUpdate),
-        allowedFields
-      );
-      const { values, params } = getQueryData(fieldsToUpdate, true, 2);
+    let fieldsToUpdate = { ...value };
+    fieldsToUpdate = getFilteredFields(
+      formatKeysToSnakeCase(fieldsToUpdate),
+      allowedFields
+    );
+    const { values, params } = getQueryData(fieldsToUpdate, true, 2);
 
-      const result = await client.query(
-        `
-          UPDATE users
-          SET ${params}
-          WHERE id = $1
-          RETURNING ${userPropsStr}
-        `,
-        [value.id, ...values]
-      );
-      return result.rows[0];
-    } else {
-      throw new Error("Incorrect password");
-    }
+    const result = await client.query(
+      `
+        UPDATE users
+        SET ${params}
+        WHERE id = $1
+        RETURNING ${userPropsStr}
+      `,
+      [value.id, ...values]
+    );
+    return result.rows[0];
   } finally {
     client.release();
   }
 };
 
-export const deleteUser = async (id, currentPassword) => {
-  const { error, value } = updatedSchema.validate({
-    id,
-    currentPassword,
-  });
+export const deleteUser = async (id) => {
+  const { error, value } = updatedSchema.validate({ id });
 
   if (error) {
     throw new Error(error.details[0].message);
@@ -212,16 +193,11 @@ export const deleteUser = async (id, currentPassword) => {
     if (!user) {
       throw new Error("User not found");
     }
-    const isAuthenticated = await bcrypt.compare(value.currentPassword, user.password);
-    if (isAuthenticated) {
-      const result = await client.query(
-        `DELETE FROM users WHERE id = $1 RETURNING ${userPropsStr}`,
-        [value.id]
-      );
-      return result.rows[0];
-    } else {
-      throw new Error("Incorrect password");
-    }
+    const result = await client.query(
+      `DELETE FROM users WHERE id = $1 RETURNING ${userPropsStr}`,
+      [value.id]
+    );
+    return result.rows[0];
   } finally {
     client.release();
   }
