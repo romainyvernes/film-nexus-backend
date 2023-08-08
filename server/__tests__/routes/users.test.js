@@ -19,43 +19,6 @@ describe('Users Routes', () => {
     token = generateAuthToken(user.id);
   });
 
-  // tests to move to auth routes when ready
-  // it('POST Attempting to create a user without required fields returns a 400 error', async () => {
-  //   const response = await request(app)
-  //     .post("/api/users")
-  //     .send({
-  //       username: newTestUserInfo.username,
-  //     })
-  //     .set('Accept', 'application/json');
-
-  //   expect(response.headers["content-type"]).toMatch(/json/);
-  //   expect(response.status).toBe(400);
-  // });
-
-  // it('POST Create a new user', async () => {
-  //   const response = await request(app)
-  //     .post("/api/users")
-  //     .send(newTestUserInfo)
-  //     .set('Accept', 'application/json');
-
-  //   expect(response.headers["content-type"]).toMatch(/json/);
-  //   expect(response.status).toBe(201);
-
-  //   user = response.body;
-  // });
-
-  // it('POST Prevent the creation of a new user that already exists', async () => {
-  //   const response = await request(app)
-  //     .post("/api/users")
-  //     .send(newTestUserInfo)
-  //     .set('Accept', 'application/json');
-
-  //   expect(response.status).toBe(401);
-  //   expect(response.body).toMatchObject({
-  //     message: expect.stringMatching("User already exists")
-  //   });
-  // });
-
   it('GET Search for users to add to a project w/o search criteria', async () => {
     // create a new user and project in DB
     [secondUser, project] = await Promise.all([

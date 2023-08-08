@@ -4,9 +4,12 @@ import membersRouter from "./members";
 import projectsRouter from "./projects";
 import messagesRouter from "./messages";
 import filesRouter from "./files";
+import authRouter from "./auth";
 import { verifyToken } from "../middleware/jwt";
 
 const router = Router();
+
+router.use("/auth", authRouter);
 
 // prevent non-authenticated users from accessing below routes
 router.use(verifyToken);
