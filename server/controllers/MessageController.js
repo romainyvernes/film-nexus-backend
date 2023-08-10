@@ -6,7 +6,7 @@ import { default as redis } from "../redis";
 import { formatDataForSortedSet } from "../utils/helpers";
 
 // expiration time in Redis
-const MESSAGE_TTL = 60 * 5;
+const MESSAGE_TTL = 60 * 5; // 5 minutes
 
 export const getMessages = async (req, res) => {
   const { error, value } = baseSchema

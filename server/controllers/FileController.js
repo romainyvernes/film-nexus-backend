@@ -7,7 +7,7 @@ import { deleteFileFromS3 } from "../middleware/fileUpload";
 import { formatDataForSortedSet } from "../utils/helpers";
 
 // expiration time in Redis
-const FILE_TTL = 60 * 5;
+const FILE_TTL = 60 * 5; // 5 minutes
 
 export const getFiles = async (req, res) => {
   const { error, value } = baseSchema

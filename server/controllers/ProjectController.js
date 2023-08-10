@@ -25,7 +25,7 @@ export const getProjects = async (req, res) => {
 
   const pageNumber = page || DEFAULT_PAGE_NUMBER;
   const userId = req.userId;
-  const redisKey = "projects";
+  const redisKey = `users:${userId}:projects`;
   const redisSubKey = `page:${pageNumber}:search:${name}`;
 
   try {
