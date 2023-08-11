@@ -4,4 +4,14 @@ export default {
     clientSecret: process.env.FACEBOOK_APP_SECRET,
     callbackURL: process.env.FACEBOOK_REDIRECT_URL,
   },
+  postgres: {
+    host: process.env.POSTGRES_HOST,
+    password: process.env.POSTGRES_PW,
+    user: process.env.POSTGRES_USER,
+  },
+  redis: {
+    host: process.env.REDIS_HOST,
+    username: process.env.REDIS_USERNAME,
+    password: process.env.REDIS_PW,
+  },
 };
