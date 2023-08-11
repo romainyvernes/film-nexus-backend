@@ -63,7 +63,7 @@ export const getFiles = async (req, res) => {
 
     await Promise.all([
       redis.zadd(fileRedisKey, ...formattedMessages),
-      redis.set(countRedisKey, fileObj.totalCount)
+      redis.set(countRedisKey, fileObj.totalCount, "EX", 5 * 60)
     ]);
     await redis.expire(fileRedisKey, FILE_TTL);
 

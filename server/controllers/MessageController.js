@@ -62,7 +62,7 @@ export const getMessages = async (req, res) => {
 
     await Promise.all([
       redis.zadd(messageRedisKey, ...formattedMessages),
-      redis.set(countRedisKey, messageObj.totalCount)
+      redis.set(countRedisKey, messageObj.totalCount, "EX", 5 * 60)
     ]);
     await redis.expire(messageRedisKey, MESSAGE_TTL);
 
