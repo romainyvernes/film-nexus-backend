@@ -10,11 +10,11 @@ COPY package*.json ./
 # Install app dependencies
 RUN npm ci --production && npm cache clean --force
 
+# Copy the rest of the application code to the working directory
+COPY ./server ./server
+
 # Create build
 RUN npm run build
-
-# Copy the rest of the application code to the working directory
-COPY . .
 
 # Expose the ports for Express, PostgreSQL, and Redis
 EXPOSE 5000
