@@ -7,13 +7,15 @@
 import app from '../app';
 import debugLib from 'debug';
 import http from 'http';
-const debug = debugLib('es6-express-template:server');
+import { Server } from "socket.io";
+import socketHandlers from "../socketHandlers";
+const debug = debugLib('film-nexus-backend:server');
 
 /**
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '5000');
 app.set('port', port);
 
 /**
@@ -21,6 +23,10 @@ app.set('port', port);
  */
 
 const server = http.createServer(app);
+
+// Set up socket io
+const io = new Server(server);
+socketHandlers(io);
 
 /**
  * Listen on provided port, on all network interfaces.

@@ -1,20 +1,30 @@
-import express from 'express';
-import path from 'path';
-import cookieParser from 'cookie-parser';
-import logger from 'morgan';
+import express from "express";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import dotenv from "dotenv";
+import helmet from "helmet";
+import passport from "passport";
+import apiRouter from "./routes";
+import { sanitizeDataInput } from "./middleware/sanitization";
+import "./middleware/passport";
 
-import indexRouter from './routes/index';
-import usersRouter from './routes/users';
+// Load environment variables based on the current environment
+if (process.env.NODE_ENV === "production") {
+  dotenv.config({ path: ".env.prod" });
+} else {
+  dotenv.config({ path: ".env.local" });
+}
 
 const app = express();
 
-app.use(logger('dev'));
+app.use(passport.initialize());
+app.use(helmet());
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, '../public'), { index: false }));
+app.use(sanitizeDataInput);
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use("/api", apiRouter);
 
 export default app;
