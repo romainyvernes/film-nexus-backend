@@ -2,7 +2,7 @@ export default {
   facebook: {
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: process.env.FACEBOOK_REDIRECT_URL,
+    callbackURL: `${process.env.SITE_ROOT_URL}${process.env.FACEBOOK_REDIRECT_PATH}`,
   },
   postgres: {
     host: process.env.POSTGRES_HOST,
