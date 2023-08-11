@@ -9,6 +9,23 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      FACEBOOK_APP_ID: ${{ secrets.FACEBOOK_APP_ID }}
+      FACEBOOK_APP_SECRET: ${{ secrets.FACEBOOK_APP_SECRET }}
+      FACEBOOK_REDIRECT_PATH: ${{ secrets.FACEBOOK_REDIRECT_PATH }}
+      POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+      POSTGRES-PW: ${{ secrets.POSTGRES-PW }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_USERNAME: ${{ secrets.REDIS_USERNAME }}
+      REDIS_PW: ${{ secrets.REDIS_PW }}
+      SITE_ROOT_URL: ${{ secrets.SITE_ROOT_URL }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
