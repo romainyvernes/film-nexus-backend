@@ -19,7 +19,15 @@ const app = express();
 
 app.use(passport.initialize());
 app.use(helmet());
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://black-dust-442.fly.dev",
+    "http://localhost:3000",
+    "http://localhost:5000",
+    "https://romainyvernes.github.io",
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
