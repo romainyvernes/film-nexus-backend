@@ -1,7 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import "../env";
+import "./env";
 import helmet from "helmet";
 import passport from "passport";
 import apiRouter from "./routes";
