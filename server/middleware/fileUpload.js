@@ -1,4 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import multer from "multer";
 import multerS3 from "multer-s3";
 import { baseSchema } from "../validation/schemas/File";
@@ -80,8 +80,9 @@ export const handleFileUpload = [
 ];
 
 export const deleteFileFromS3 = (fileKey) => {
-  return s3.deleteObject({
+  const deleteCommand = new DeleteObjectCommand({
     Bucket: bucket,
     Key: fileKey
   });
+  return s3.send(deleteCommand);
 };
