@@ -4,7 +4,7 @@ import { formatKeysToSnakeCase, getFilteredFields, getQueryData } from "../utils
 import { baseSchema, updatedSchema } from "../validation/schemas/File";
 import { userProps } from "./User";
 
-const allowedFields = ["name", "url"];
+const allowedFields = ["name", "url", "s3_file_key"];
 
 export const fileProps = [
   "id",

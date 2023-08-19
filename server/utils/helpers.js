@@ -42,11 +42,15 @@ export const getQueryData = (fields, isUpdate = false, indexOffset = 1) => {
   };
 };
 
+export const camelToSnake = (str) => {
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+};
+
 export const formatKeysToSnakeCase = (obj) => {
   const snakeCaseObj = {};
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
-      const snakeCaseKey = _.snakeCase(key).toLowerCase();
+      const snakeCaseKey = camelToSnake(key);
       snakeCaseObj[snakeCaseKey] = obj[key];
     }
   }

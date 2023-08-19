@@ -78,8 +78,9 @@ export const createFile = async (req, res) => {
     {
       projectId: req.params.id,
       creatorId: req.userId,
-      url: req.file.position,
-      name: req.file.originalName,
+      url: req.file.location,
+      name: req.file.originalname,
+      s3FileKey: req.file.key,
     },
     { allowUnknown: true }
   );
@@ -97,12 +98,6 @@ export const createFile = async (req, res) => {
   } = value;
 
   try {
-    const accessor = await Member.getMember(projectId, creatorId);
-
-    if (!accessor) {
-      return res.status(401).json({ File: "Access denied" });
-    }
-
     const createdFile = await File.createFile(
       creatorId,
       projectId,
@@ -116,7 +111,7 @@ export const createFile = async (req, res) => {
 
     res.status(201).json(createdFile);
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Error creating File' });
+    res.status(500).json({ message: error.message || 'Error uploading File' });
   }
 };
 
